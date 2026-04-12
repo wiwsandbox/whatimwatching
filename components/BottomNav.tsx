@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useApp } from "@/lib/store";
 
 const navItems = [
   {
@@ -91,6 +92,7 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { inboxUnreadCount } = useApp();
 
   return (
     <nav
@@ -113,7 +115,17 @@ export default function BottomNav() {
               href={item.href}
               className="flex flex-col items-center gap-1 min-w-[56px] py-1"
             >
-              {item.icon(isActive)}
+              <div className="relative">
+                {item.icon(isActive)}
+                {item.href === "/" && inboxUnreadCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold text-white px-[3px]"
+                    style={{ background: "#ff5757", lineHeight: 1 }}
+                  >
+                    {inboxUnreadCount > 99 ? "99+" : inboxUnreadCount}
+                  </span>
+                )}
+              </div>
               <span
                 className="text-[10px] font-medium tracking-wide"
                 style={{ color: isActive ? "#ff5757" : "#aaaaaa" }}

@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   ReactNode,
 } from "react";
 import { getClient } from "./supabase/client";
@@ -18,6 +19,8 @@ interface AppState {
   watchlist: WatchlistItem[];
   friendRequests: FriendRequest[];
   toast: ToastState | null;
+  inboxUnreadCount: number;
+  markInboxSeen: () => void;
   markWatched: (recId: string) => void;
   markUnwatched: (recId: string) => void;
   addToWatchlist: (item: Omit<WatchlistItem, "id" | "addedAt" | "watched">) => void;
@@ -54,6 +57,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [lastInboxSeenAt, setLastInboxSeenAt] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("wiw_inbox_seen") ?? new Date(0).toISOString();
+    }
+    return new Date(0).toISOString();
+  });
   const supabase = getClient();
 
   useEffect(() => {
@@ -145,6 +154,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, supabase]);
 
+  const markInboxSeen = useCallback(() => {
+    const now = new Date().toISOString();
+    setLastInboxSeenAt(now);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("wiw_inbox_seen", now);
+    }
+  }, []);
+
+  const inboxUnreadCount = useMemo(() => {
+    const newRecs = recommendations.filter(
+      (r) => !r.watched && r.createdAt > lastInboxSeenAt
+    ).length;
+    const newRequests = friendRequests.filter(
+      (r) => r.createdAt > lastInboxSeenAt
+    ).length;
+    return newRecs + newRequests;
+  }, [recommendations, friendRequests, lastInboxSeenAt]);
+
   useEffect(() => {
     refreshRecommendations();
     refreshWatchlist();
@@ -164,6 +191,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId, supabase, refreshRecommendations]);
+
+  // Real-time: refresh when a new friend request arrives
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel("friend-requests-inbox")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "friendships", filter: `friend_id=eq.${userId}` },
+        () => { refreshFriendRequests(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, supabase, refreshFriendRequests]);
 
   const showToast = useCallback((message: string) => {
     const id = Date.now();
@@ -231,6 +272,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       showToast(`Sent to ${friendNames.join(", ")}`);
+
+      // Fire push notifications — best-effort, don't block on failure
+      friendIds.forEach((friendId) => {
+        fetch("/api/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipient_user_id: friendId,
+            notification_type: "recommendation",
+            title,
+          }),
+        }).catch(() => {});
+      });
+
       return { error: null };
     },
     [userId, supabase, showToast]
@@ -478,6 +533,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         watchlist,
         friendRequests,
         toast,
+        inboxUnreadCount,
+        markInboxSeen,
         markWatched,
         markUnwatched,
         addToWatchlist,

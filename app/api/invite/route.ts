@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendPushToUser } from "@/lib/sendPush";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -63,6 +64,14 @@ export async function POST(request: NextRequest) {
       actor_id: user.id,
       payload: { sender_name: senderName },
     });
+
+    // Push notification — best-effort
+    sendPushToUser(
+      recipient.id,
+      "wiw",
+      `${senderName} wants to connect with you on wiw`,
+      "/"
+    ).catch(() => {});
 
     return NextResponse.json({ success: true, found: true });
   }

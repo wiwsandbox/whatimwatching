@@ -12,10 +12,15 @@ import type { TMDBTitle } from "@/lib/types";
 type Filter = "all" | "unwatched" | "watched";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, friendRequests, acceptFriendRequest, declineFriendRequest } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [filter, setFilter] = useState<Filter>("all");
   const [loading, setLoading] = useState(true);
+
+  // Clear the badge whenever the inbox is opened
+  useEffect(() => {
+    markInboxSeen();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTitles = useCallback(async () => {
     const toFetch = recommendations.filter(
