@@ -34,7 +34,6 @@ export default function FriendProfilePage() {
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [debugError, setDebugError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -46,9 +45,6 @@ export default function FriendProfilePage() {
         .single();
 
       if (profileError || !profileData) {
-        const msg = `id=${friendId} | code=${profileError?.code} | msg=${profileError?.message} | hint=${profileError?.hint}`;
-        console.error("Friend profile error:", msg);
-        setDebugError(msg);
         setNotFound(true);
         setLoading(false);
         return;
@@ -102,13 +98,8 @@ export default function FriendProfilePage() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6" style={{ background: "#ffffff" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "#ffffff" }}>
         <p style={{ color: "#999999" }}>Friend not found.</p>
-        {debugError && (
-          <p className="text-xs text-center break-all p-3 rounded-xl" style={{ background: "#f7f7f7", color: "#666666" }}>
-            {debugError}
-          </p>
-        )}
         <button onClick={() => router.back()} style={{ color: "#ff5757" }} className="text-sm">
           Go back
         </button>
