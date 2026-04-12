@@ -22,15 +22,21 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "wiw",
-  description: "Social TV & film recommendations from friends",
+  description: "Share what you're watching with people you trust",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "wiw",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#ffffff",
+  userScalable: false,
+  themeColor: "#ff5757",
 };
 
 export default function RootLayout({
