@@ -12,7 +12,7 @@ import type { TMDBTitle } from "@/lib/types";
 type Filter = "all" | "unwatched" | "watched";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, friendRequests, acceptFriendRequest, declineFriendRequest } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, friendRequests, acceptFriendRequest, declineFriendRequest } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [filter, setFilter] = useState<Filter>("all");
   const [loading, setLoading] = useState(true);
@@ -203,6 +203,7 @@ export default function InboxPage() {
               rec={rec}
               onMarkWatched={markWatched}
               onMarkUnwatched={markUnwatched}
+              onAddToWatchlist={addRecToWatchlist}
             />
           ))
         )}

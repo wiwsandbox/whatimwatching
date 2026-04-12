@@ -38,6 +38,7 @@ export default function RecommendModal({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
 
   const loadFriends = useCallback(async () => {
@@ -87,13 +88,19 @@ export default function RecommendModal({
   const handleSend = async () => {
     if (selectedIds.size === 0) return;
     setSending(true);
+    setSendError(null);
     const selectedFriends = friends.filter((f) => selectedIds.has(f.id));
     const friendIds = selectedFriends.map((f) => f.id);
     const friendNames = selectedFriends.map((f) =>
       (f.display_name || f.username).split(" ")[0]
     );
-    await sendRecommendation(tmdbId, mediaType, titleName, posterPath ?? null, friendIds, friendNames, note);
-    onClose();
+    const { error } = await sendRecommendation(tmdbId, mediaType, titleName, posterPath ?? null, friendIds, friendNames, note);
+    setSending(false);
+    if (error) {
+      setSendError(error);
+    } else {
+      onClose();
+    }
   };
 
   if (!isOpen && !visible) return null;
@@ -209,6 +216,18 @@ export default function RecommendModal({
             }}
           />
         </div>
+
+        {/* Error */}
+        {sendError && (
+          <div className="px-5 mb-3">
+            <div
+              className="px-3 py-2 rounded-xl text-xs"
+              style={{ background: "rgba(255,87,87,0.08)", color: "#ff5757", border: "1px solid rgba(255,87,87,0.2)" }}
+            >
+              {sendError}
+            </div>
+          </div>
+        )}
 
         {/* Send button */}
         <div className="px-5">

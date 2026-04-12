@@ -12,12 +12,14 @@ interface RecommendationCardProps {
   rec: Recommendation & { tmdbTitle?: import("@/lib/types").TMDBTitle };
   onMarkWatched: (id: string) => void;
   onMarkUnwatched: (id: string) => void;
+  onAddToWatchlist: (recId: string, tmdbId: number, mediaType: import("@/lib/types").MediaType, title: string, posterPath: string | null) => void;
 }
 
 export default function RecommendationCard({
   rec,
   onMarkWatched,
   onMarkUnwatched,
+  onAddToWatchlist,
 }: RecommendationCardProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const tmdbTitle = rec.tmdbTitle;
@@ -122,46 +124,53 @@ export default function RecommendationCard({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 mt-2.5">
-            <button
-              onClick={handleToggleWatched}
-              disabled={isAnimating}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95"
-              style={
-                rec.watched
-                  ? { background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }
-                  : { background: "#ff5757", color: "white" }
-              }
-            >
-              {rec.watched ? (
-                <>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6L5 9L10 3" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Watched
-                </>
-              ) : (
-                <>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <circle cx="6" cy="6" r="5" stroke="white" strokeWidth="1.5" />
-                    <path d="M4 6L6 8L9 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Mark watched
-                </>
-              )}
-            </button>
-
-            <Link
-              href={`/title/${rec.mediaType}-${rec.tmdbId}`}
-              className="flex items-center gap-1 text-xs rounded-full px-3 py-1.5 transition-all active:scale-95"
-              style={{ background: "#f7f7f7", color: "#666666", border: "1px solid #eeeeee" }}
-            >
-              Details
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M3 5H7M7 5L5 3M7 5L5 7" stroke="#999999" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-          </div>
+          {!rec.watched ? (
+            <div className="flex items-center gap-2 mt-2.5">
+              <button
+                onClick={() => onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95"
+                style={{ background: "#ff5757", color: "white" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M10 1.5H2C1.4 1.5 1 1.9 1 2.5V10.5L6 8L11 10.5V2.5C11 1.9 10.6 1.5 10 1.5Z" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M6 3.5V6.5M4.5 5H7.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                Add to Watchlist
+              </button>
+              <button
+                onClick={handleToggleWatched}
+                disabled={isAnimating}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95"
+                style={{ background: "#f7f7f7", color: "#666666", border: "1px solid #eeeeee" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6L5 9L10 3" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Mark seen
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mt-2.5">
+              <button
+                onClick={handleToggleWatched}
+                disabled={isAnimating}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all active:scale-95"
+                style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6L5 9L10 3" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Seen
+              </button>
+              <Link
+                href={`/title/${rec.mediaType}-${rec.tmdbId}`}
+                className="flex items-center gap-1 text-xs rounded-full px-3 py-1.5 transition-all active:scale-95"
+                style={{ background: "#f7f7f7", color: "#666666", border: "1px solid #eeeeee" }}
+              >
+                Details
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -37,7 +37,8 @@ interface AppState {
     friendIds: string[],
     friendNames: string[],
     note: string
-  ) => Promise<void>;
+  ) => Promise<{ error: string | null }>;
+  addRecToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   refreshRecommendations: () => Promise<void>;
   refreshWatchlist: () => Promise<void>;
   refreshFriendRequests: () => Promise<void>;
@@ -145,6 +146,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshFriendRequests();
   }, [refreshRecommendations, refreshWatchlist, refreshFriendRequests]);
 
+  // Real-time: refresh inbox when a new recommendation arrives
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel("recommendations-inbox")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "recommendations", filter: `receiver_id=eq.${userId}` },
+        () => { refreshRecommendations(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, supabase, refreshRecommendations]);
+
   const showToast = useCallback((message: string) => {
     const id = Date.now();
     setToast({ message, id });
@@ -191,8 +206,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       friendIds: string[],
       friendNames: string[],
       note: string
-    ) => {
-      if (!userId) return;
+    ): Promise<{ error: string | null }> => {
+      if (!userId) return { error: "Not authenticated" };
 
       const rows = friendIds.map((friendId) => ({
         sender_id: userId,
@@ -204,27 +219,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         note: note.trim() || null,
       }));
 
-      await supabase.from("recommendations").insert(rows);
+      const { error } = await supabase.from("recommendations").insert(rows);
+      if (error) {
+        console.error("sendRecommendation error:", error);
+        return { error: error.message };
+      }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      friendIds.forEach((receiverId) => {
-        fetch(`${supabaseUrl}/functions/v1/send-push`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseKey}`,
-          },
-          body: JSON.stringify({
-            user_id: receiverId,
-            title: "New recommendation",
-            body: `Someone recommended "${title}" to you`,
-            url: "/",
-          }),
-        }).catch(() => {});
-      });
-
-      showToast(`Recommended to ${friendNames.join(", ")}`);
+      showToast(`Sent to ${friendNames.join(", ")}`);
+      return { error: null };
     },
     [userId, supabase, showToast]
   );
@@ -248,6 +250,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
     },
     [supabase]
+  );
+
+  const addRecToWatchlist = useCallback(
+    async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
+      if (!userId) return;
+      // Add to watchlist
+      const { data, error } = await supabase
+        .from("watchlist")
+        .upsert(
+          { user_id: userId, tmdb_id: tmdbId, media_type: mediaType, title, poster_path: posterPath, status: "to_watch" },
+          { onConflict: "user_id,tmdb_id,media_type" }
+        )
+        .select()
+        .single();
+
+      if (error) { showToast(`Could not add to watchlist: ${error.message}`); return; }
+
+      if (data) {
+        setWatchlist((prev) => {
+          const exists = prev.some((w) => w.tmdbId === tmdbId && w.mediaType === mediaType);
+          const newItem: WatchlistItem = {
+            id: data.id, tmdbId: data.tmdb_id, mediaType: data.media_type as MediaType,
+            titleStr: data.title, posterPath: data.poster_path,
+            status: data.status as WatchlistStatus, watched: false, rating: null, addedAt: data.created_at,
+          };
+          return exists ? prev : [newItem, ...prev];
+        });
+      }
+
+      // Mark recommendation as seen
+      const now = new Date().toISOString();
+      await supabase.from("recommendations").update({ read_at: now }).eq("id", recId);
+      setRecommendations((prev) =>
+        prev.map((r) => r.id === recId ? { ...r, watched: true, watchedAt: now } : r)
+      );
+      showToast("Added to watchlist");
+    },
+    [userId, supabase, showToast]
   );
 
   const addToWatchlist = useCallback(
@@ -444,6 +484,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         markWatchlistWatched,
         showToast,
         sendRecommendation,
+        addRecToWatchlist,
         refreshRecommendations,
         refreshWatchlist,
         refreshFriendRequests,
