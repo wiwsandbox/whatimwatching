@@ -98,6 +98,7 @@ export const mockWatchlist: WatchlistItem[] = [
     tmdbId: 693134,
     mediaType: "movie",
     addedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    status: "to_watch",
     watched: false,
   },
   {
@@ -105,6 +106,7 @@ export const mockWatchlist: WatchlistItem[] = [
     tmdbId: 76479,
     mediaType: "tv",
     addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+    status: "to_watch",
     watched: false,
   },
   {
@@ -112,6 +114,7 @@ export const mockWatchlist: WatchlistItem[] = [
     tmdbId: 550,
     mediaType: "movie",
     addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+    status: "watched",
     watched: true,
     watchedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   },
@@ -120,6 +123,7 @@ export const mockWatchlist: WatchlistItem[] = [
     tmdbId: 100088,
     mediaType: "tv",
     addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
+    status: "to_watch",
     watched: false,
   },
 ];
