@@ -272,14 +272,14 @@ export default function OnboardingPage() {
 
           <div className="mt-auto space-y-3 pt-4">
             <button
-              onClick={() => router.replace("/")}
+              onClick={() => router.replace("/search")}
               className="w-full py-4 rounded-2xl font-semibold text-sm"
               style={{ background: "#ff5757", color: "white" }}
             >
               Go to my inbox
             </button>
             <button
-              onClick={() => router.replace("/")}
+              onClick={() => router.replace("/search")}
               className="w-full py-3 rounded-2xl text-sm"
               style={{ color: "#999999" }}
             >

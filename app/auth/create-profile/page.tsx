@@ -50,7 +50,7 @@ export default function CreateProfilePage() {
     const { error: profileError } = await updateProfile({ display_name: name, username: uname });
     setLoading(false);
     if (profileError) setError(profileError);
-    else router.replace("/");
+    else router.replace("/search");
   };
 
   const canSubmit = displayName.trim().length > 0 && username.length >= 3;

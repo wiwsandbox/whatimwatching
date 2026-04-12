@@ -41,7 +41,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      if (profile) router.replace("/");
+      if (profile) router.replace("/search");
       else router.replace("/auth/create-profile");
     }
   }, [user, profile, loading, router]);
@@ -137,7 +137,7 @@ export default function AuthPage() {
     } else if (isNewUser) {
       router.replace("/auth/create-profile");
     } else {
-      router.replace("/");
+      router.replace("/search");
     }
   };
 
