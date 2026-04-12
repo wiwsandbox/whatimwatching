@@ -198,7 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addToWatchlist = useCallback(
     async (item: Omit<WatchlistItem, "id" | "addedAt" | "watched">) => {
       if (!userId) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("watchlist")
         .upsert(
           {
@@ -214,6 +214,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
         .select()
         .single();
+
+      if (error) {
+        console.error("addToWatchlist error:", error);
+        showToast(`Could not save: ${error.message}`);
+        return;
+      }
 
       if (data) {
         const newItem: WatchlistItem = {
@@ -236,20 +242,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
           );
           return [newItem, ...prev];
         });
+        showToast("Added to watchlist");
       }
     },
-    [userId, supabase]
+    [userId, supabase, showToast]
   );
 
   const removeFromWatchlist = useCallback(
     async (tmdbId: number, mediaType: MediaType) => {
       if (!userId) return;
-      await supabase
+      const { error } = await supabase
         .from("watchlist")
         .delete()
         .eq("user_id", userId)
         .eq("tmdb_id", tmdbId)
         .eq("media_type", mediaType);
+      if (error) {
+        console.error("removeFromWatchlist error:", error);
+        return;
+      }
       setWatchlist((prev) =>
         prev.filter((w) => !(w.tmdbId === tmdbId && w.mediaType === mediaType))
       );
@@ -273,14 +284,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setWatchlistStatus = useCallback(
     async (id: string, status: WatchlistStatus) => {
-      await supabase.from("watchlist").update({ status }).eq("id", id);
+      const { error } = await supabase.from("watchlist").update({ status }).eq("id", id);
+      if (error) {
+        console.error("setWatchlistStatus error:", error);
+        showToast(`Could not update status: ${error.message}`);
+        return;
+      }
       setWatchlist((prev) =>
         prev.map((w) =>
           w.id === id ? { ...w, status, watched: status === "watched" } : w
         )
       );
     },
-    [supabase]
+    [supabase, showToast]
   );
 
   const setRating = useCallback(
@@ -291,16 +307,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
 
       if (existing) {
-        await supabase
+        const { error } = await supabase
           .from("watchlist")
           .update({ rating })
           .eq("id", existing.id);
+        if (error) {
+          console.error("setRating error:", error);
+          showToast(`Could not save rating: ${error.message}`);
+          return;
+        }
         setWatchlist((prev) =>
           prev.map((w) => w.id === existing.id ? { ...w, rating } : w)
         );
+        showToast(rating ? `Rated ${rating}/10` : "Rating removed");
       } else {
         // Not in watchlist — add with status "watched"
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("watchlist")
           .upsert(
             {
@@ -315,6 +337,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           )
           .select()
           .single();
+
+        if (error) {
+          console.error("setRating (insert) error:", error);
+          showToast(`Could not save rating: ${error.message}`);
+          return;
+        }
 
         if (data) {
           setWatchlist((prev) => [
@@ -331,6 +359,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             },
             ...prev,
           ]);
+          showToast(rating ? `Rated ${rating}/10` : "Rating removed");
         }
       }
     },
