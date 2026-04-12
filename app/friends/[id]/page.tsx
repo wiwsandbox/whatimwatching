@@ -38,13 +38,18 @@ export default function FriendProfilePage() {
   useEffect(() => {
     async function load() {
       // Fetch friend profile
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, username, display_name, avatar_url, bio")
         .eq("id", friendId)
         .single();
 
-      if (!profileData) { setNotFound(true); setLoading(false); return; }
+      if (profileError || !profileData) {
+        console.error("Friend profile error:", profileError, "friendId:", friendId);
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
       setFriend(profileData);
 
       // Fetch friend's watchlist (RLS policy allows friends to see each other's lists)

@@ -45,11 +45,11 @@ export default function ProfilePage() {
         .eq("status", "accepted");
 
       if (data) {
-        setFriends(
-          data
-            .map((row) => (Array.isArray(row.friend) ? row.friend[0] : row.friend))
-            .filter(Boolean) as Friend[]
-        );
+        const mapped = data
+          .map((row) => (Array.isArray(row.friend) ? row.friend[0] : row.friend))
+          .filter(Boolean) as Friend[];
+        console.log("Friends loaded:", JSON.stringify(mapped));
+        setFriends(mapped);
       }
       setFriendsLoading(false);
     }
