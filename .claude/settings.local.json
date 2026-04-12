@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm --version)",
+      "Read(//Users/connor/.nvm/versions/**)",
+      "Read(//Users/connor/.volta/**)",
+      "Read(//Users/connor/**)",
+      "Bash(brew list:*)",
+      "Read(//opt/homebrew/**)",
+      "Bash(ls /usr/local/opt/node*/bin/node)",
+      "Bash(brew install:*)",
+      "Bash(curl -fsSL \"https://nodejs.org/dist/v22.12.0/node-v22.12.0-darwin-arm64.tar.gz\" -o /tmp/node.tar.gz)",
+      "Bash(tar -xzf /tmp/node.tar.gz -C /tmp/)",
+      "Read(//tmp/node-v22.12.0-darwin-arm64/**)",
+      "Bash(export PATH=\"/tmp/node-v22.12.0-darwin-arm64/bin:$PATH\")",
+      "Read(//private/tmp/**)",
+      "Bash(npx create-next-app@latest whatimwatching --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

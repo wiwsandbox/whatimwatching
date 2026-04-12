@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "whatimwatching",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/Applications/WIW/node_modules/next/dist/bin/next", "dev"],
+      "port": 3000,
+      "autoPort": true,
+      "env": {
+        "PATH": "/tmp/node-v22.12.0-darwin-arm64/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    }
+  ]
+}
