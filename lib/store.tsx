@@ -68,7 +68,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshRecommendations = useCallback(async () => {
     if (!userId) { setRecommendations([]); return; }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("recommendations")
       .select(`
         id, tmdb_id, media_type, title, poster_path, note, read_at, created_at,
@@ -76,6 +76,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       `)
       .eq("receiver_id", userId)
       .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("refreshRecommendations error:", error);
+      return;
+    }
 
     if (data) {
       setRecommendations(
