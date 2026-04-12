@@ -78,9 +78,9 @@ export default function AuthPage() {
     const { error } = await sendOtp(full);
     setSubmitting(false);
     if (error) {
-      setError(error.includes("rate") || error.includes("many")
-        ? "Too many requests. Please wait a minute and try again."
-        : error);
+      // Show the raw error so misconfiguration (e.g. phone provider not enabled,
+      // bad Twilio credentials) is visible rather than silently swallowed.
+      setError(error);
     } else {
       setOtp(["", "", "", "", "", ""]);
       setStep("otp");
@@ -146,7 +146,7 @@ export default function AuthPage() {
     setError(null);
     setOtp(["", "", "", "", "", ""]);
     const { error } = await sendOtp(fullPhone);
-    if (error) setError("Could not resend. Please try again.");
+    if (error) setError(error);
     else {
       setResendCooldown(30);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);

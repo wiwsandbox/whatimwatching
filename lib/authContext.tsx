@@ -88,8 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sendOtp = useCallback(
     async (phone: string) => {
-      const { error } = await supabase.auth.signInWithOtp({ phone });
-      return { error: error?.message ?? null };
+      try {
+        const { error } = await supabase.auth.signInWithOtp({ phone });
+        return { error: error?.message ?? null };
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Network error — please check your connection and try again." };
+      }
     },
     [supabase]
   );
