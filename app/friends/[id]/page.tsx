@@ -68,7 +68,7 @@ export default function FriendProfilePage() {
         }));
 
         setWatchedItems(items.filter((i) => i.status === "watched"));
-        setToWatchItems(items.filter((i) => i.status !== "watched"));
+        setToWatchItems(items.filter((i) => i.status === "to_watch" || i.status === "watching"));
 
         // Fetch TMDB data for all items
         const toFetch = items;

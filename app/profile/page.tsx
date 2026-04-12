@@ -5,42 +5,65 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
-import PosterImage from "@/components/PosterImage";
-import { getMovie, getTVShow, getDisplayTitle } from "@/lib/tmdb";
 import { useApp } from "@/lib/store";
 import { useAuth } from "@/lib/authContext";
+import { getClient } from "@/lib/supabase/client";
 import AddFriendSheet from "@/components/AddFriendSheet";
-import type { TMDBTitle, WatchlistItem } from "@/lib/types";
+
+interface Friend {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+}
 
 export default function ProfilePage() {
-  const { watchlist } = useApp();
   const { user, profile, signOut } = useAuth();
+  const { watchlist } = useApp();
   const router = useRouter();
-  const [recentPosters, setRecentPosters] = useState<Array<{ title: TMDBTitle; item: typeof watchlist[0] }>>([]);
+  const supabase = getClient();
+
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
+  const [friendQuery, setFriendQuery] = useState("");
   const [addFriendOpen, setAddFriendOpen] = useState(false);
-
-  useEffect(() => {
-    const watched = watchlist.filter((w) => w.status === "watched").slice(0, 6);
-    Promise.allSettled(
-      watched.map((w) => (w.mediaType === "movie" ? getMovie(w.tmdbId) : getTVShow(w.tmdbId)))
-    ).then((results) => {
-      const enriched = results
-        .map((r, i) => (r.status === "fulfilled" ? { title: r.value, item: watched[i] } : null))
-        .filter((x): x is NonNullable<typeof x> => x !== null);
-      setRecentPosters(enriched);
-    });
-  }, [watchlist]);
-
-  const watchedCount = watchlist.filter((w) => w.status === "watched").length;
-  const toWatchCount = watchlist.filter((w) => w.status !== "watched").length;
-  const ratedCount = watchlist.filter((w) => w.rating).length;
 
   const displayName = profile?.display_name || profile?.username || user?.email?.split("@")[0] || "?";
   const username = profile?.username || user?.email?.split("@")[0] || "";
-
   const avatarColor = profile?.avatar_url?.startsWith("color:")
     ? profile.avatar_url.slice(6)
     : "#ff5757";
+
+  useEffect(() => {
+    if (!user) return;
+    async function loadFriends() {
+      setFriendsLoading(true);
+      const { data } = await supabase
+        .from("friendships")
+        .select("friend:friend_id(id, username, display_name, avatar_url)")
+        .eq("user_id", user!.id)
+        .eq("status", "accepted");
+
+      if (data) {
+        setFriends(
+          data
+            .map((row) => (Array.isArray(row.friend) ? row.friend[0] : row.friend))
+            .filter(Boolean) as Friend[]
+        );
+      }
+      setFriendsLoading(false);
+    }
+    loadFriends();
+  }, [user, supabase, addFriendOpen]); // re-fetch when sheet closes (might have added someone)
+
+  const filteredFriends = friends.filter((f) => {
+    const q = friendQuery.toLowerCase();
+    if (!q) return true;
+    return (
+      (f.display_name || "").toLowerCase().includes(q) ||
+      (f.username || "").toLowerCase().includes(q)
+    );
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -62,14 +85,14 @@ export default function ProfilePage() {
           className="p-4 rounded-2xl"
           style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
         >
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
               style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
             >
               {displayName.charAt(0).toUpperCase()}
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2 className="font-bold text-base" style={{ color: "#1a1a1a" }}>{displayName}</h2>
               <p className="text-sm" style={{ color: "#999999" }}>@{username}</p>
               {profile?.bio && (
@@ -77,74 +100,103 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-
-          {/* Stats */}
-          <div
-            className="flex items-center justify-around py-3 rounded-xl"
-            style={{ background: "#f7f7f7" }}
-          >
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-lg font-bold" style={{ color: "#1a1a1a", fontFamily: "var(--font-playfair)" }}>
-                {watchedCount}
-              </span>
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>Watched</span>
-            </div>
-            <div className="w-px h-8" style={{ background: "#eeeeee" }} />
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-lg font-bold" style={{ color: "#1a1a1a", fontFamily: "var(--font-playfair)" }}>
-                {toWatchCount}
-              </span>
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>To watch</span>
-            </div>
-            <div className="w-px h-8" style={{ background: "#eeeeee" }} />
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-lg font-bold" style={{ color: "#1a1a1a", fontFamily: "var(--font-playfair)" }}>
-                {ratedCount}
-              </span>
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>Rated</span>
-            </div>
-          </div>
         </div>
 
-        {/* Add Friend */}
-        <button
-          onClick={() => setAddFriendOpen(true)}
-          className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-          style={{ background: "#fff0f0", color: "#ff5757", border: "1px solid rgba(255,87,87,0.2)" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="6" cy="5" r="3" stroke="#ff5757" strokeWidth="1.5" />
-            <path d="M1 13C1 10.8 3.2 9 6 9" stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M12 9V13M10 11H14" stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Add a friend
-        </button>
-
-        {/* Recently watched + ratings */}
+        {/* Friends section */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#cccccc" }}>
-              Recently watched
+              Friends {!friendsLoading && friends.length > 0 && `· ${friends.length}`}
             </h2>
-            <Link href="/watchlist" className="text-xs font-semibold" style={{ color: "#ff5757" }}>
-              See all
-            </Link>
+            <button
+              onClick={() => setAddFriendOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95"
+              style={{ background: "#fff0f0", color: "#ff5757", border: "1px solid rgba(255,87,87,0.2)" }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="4.5" cy="4" r="2.5" stroke="#ff5757" strokeWidth="1.3" />
+                <path d="M1 10C1 8.3 2.6 7 4.5 7" stroke="#ff5757" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M9 7V11M7 9H11" stroke="#ff5757" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              Add friend
+            </button>
           </div>
 
-          {recentPosters.length === 0 ? (
+          {/* Search bar */}
+          {friends.length > 3 && (
+            <div
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-3"
+              style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="5" stroke="#cccccc" strokeWidth="1.5" />
+                <path d="M11 11L8.5 8.5" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                value={friendQuery}
+                onChange={(e) => setFriendQuery(e.target.value)}
+                placeholder="Search friends…"
+                className="flex-1 bg-transparent text-sm outline-none"
+                style={{ color: "#1a1a1a", fontFamily: "var(--font-dm-sans)" }}
+              />
+              {friendQuery && (
+                <button onClick={() => setFriendQuery("")}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 2L10 10M10 2L2 10" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
+          {friendsLoading ? (
+            <div className="space-y-2">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-16 rounded-2xl animate-pulse" style={{ background: "#f7f7f7" }} />
+              ))}
+            </div>
+          ) : filteredFriends.length === 0 ? (
             <div
               className="flex flex-col items-center py-8 rounded-2xl text-center"
               style={{ background: "#f7f7f7" }}
             >
-              <p className="text-xs" style={{ color: "#cccccc" }}>
-                Mark titles as watched to see them here
+              <p className="text-sm font-semibold" style={{ color: "#cccccc" }}>
+                {friendQuery ? `No results for "${friendQuery}"` : "No friends yet — add someone you know"}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {recentPosters.map(({ title, item }) => (
-                <RatedPosterTile key={item.id} title={title} item={item} />
-              ))}
+            <div className="space-y-2">
+              {filteredFriends.map((friend) => {
+                const name = friend.display_name || friend.username || "?";
+                const color = friend.avatar_url?.startsWith("color:")
+                  ? friend.avatar_url.slice(6)
+                  : "#ff5757";
+                return (
+                  <Link
+                    key={friend.id}
+                    href={`/friends/${friend.id}`}
+                    className="flex items-center gap-3 p-3 rounded-2xl transition-all active:scale-[0.98]"
+                    style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                      style={{ background: color, color: "white", fontFamily: "var(--font-playfair)" }}
+                    >
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
+                      {friend.username && (
+                        <p className="text-xs" style={{ color: "#999999" }}>@{friend.username}</p>
+                      )}
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                      <path d="M5 3L9 7L5 11" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
@@ -187,37 +239,5 @@ export default function ProfilePage() {
       <BottomNav />
       <AddFriendSheet isOpen={addFriendOpen} onClose={() => setAddFriendOpen(false)} />
     </div>
-  );
-}
-
-function RatedPosterTile({
-  title,
-  item,
-}: {
-  title: TMDBTitle;
-  item: WatchlistItem;
-}) {
-  return (
-    <Link
-      href={`/title/${item.mediaType}-${item.tmdbId}`}
-      className="relative aspect-[2/3] rounded-xl overflow-hidden"
-      style={{ background: "#f7f7f7" }}
-    >
-      <PosterImage
-        path={title.poster_path}
-        alt={getDisplayTitle(title)}
-        size="w185"
-        fill
-        className="rounded-xl"
-      />
-      {item.rating && (
-        <div
-          className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-          style={{ background: "#ff5757", color: "white" }}
-        >
-          ★ {item.rating}
-        </div>
-      )}
-    </Link>
   );
 }
