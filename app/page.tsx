@@ -59,9 +59,8 @@ export default function InboxPage() {
   }));
 
   const filtered = enrichedRecs.filter((r) => {
-    if (filter === "unwatched") return !r.watched;
     if (filter === "watched") return r.watched;
-    return true;
+    return !r.watched; // "all" and "unwatched" both hide completed tiles
   });
 
   const unwatchedCount = recommendations.filter((r) => !r.watched).length;
@@ -69,26 +68,7 @@ export default function InboxPage() {
   return (
     <div className="flex flex-col min-h-screen pb-24" style={{ background: "#ffffff" }}>
       <header className="sticky top-0 z-40" style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
-        <AppHeader
-          right={
-            <Link
-              href="/search"
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90"
-              style={{ background: "#ff5757" }}
-              title="Find a title to recommend"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path
-                  d="M14 2L2 6.5L7 8.5M14 2L9.5 14L7 8.5M14 2L7 8.5"
-                  stroke="white"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-          }
-        />
+        <AppHeader />
 
         <div className="px-4 pb-3">
           {unwatchedCount > 0 && (

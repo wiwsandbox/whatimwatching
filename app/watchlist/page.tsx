@@ -10,7 +10,7 @@ import StreamingProviders from "@/components/StreamingProviders";
 import { useApp } from "@/lib/store";
 import type { TMDBTitle, WatchlistItem, WatchlistStatus } from "@/lib/types";
 
-type Filter = "all" | "to_watch" | "watching" | "watched";
+type Filter = "to_watch" | "watching" | "watched";
 
 const STATUS_LABELS: Record<WatchlistStatus, string> = {
   to_watch: "Add to Watchlist",
@@ -34,7 +34,7 @@ export default function WatchlistPage() {
   const { watchlist, removeFromWatchlist, setWatchlistStatus } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("to_watch");
 
   const fetchTitles = useCallback(async () => {
     const toFetch = watchlist.filter((w) => !titleCache[`${w.mediaType}-${w.tmdbId}`]);
@@ -60,19 +60,13 @@ export default function WatchlistPage() {
     title: titleCache[`${w.mediaType}-${w.tmdbId}`],
   }));
 
-  const filtered = enriched.filter((w) => {
-    if (filter === "to_watch") return w.status === "to_watch";
-    if (filter === "watching") return w.status === "watching";
-    if (filter === "watched") return w.status === "watched";
-    return true;
-  });
+  const filtered = enriched.filter((w) => w.status === filter);
 
   const toWatchCount = watchlist.filter((w) => w.status === "to_watch").length;
   const watchingCount = watchlist.filter((w) => w.status === "watching").length;
   const watchedCount = watchlist.filter((w) => w.status === "watched").length;
 
   const filterTabs: { key: Filter; label: string; count?: number }[] = [
-    { key: "all", label: "All", count: watchlist.length },
     { key: "to_watch", label: "To Watch", count: toWatchCount },
     { key: "watching", label: "Watching", count: watchingCount },
     { key: "watched", label: "Watched", count: watchedCount },
@@ -84,16 +78,7 @@ export default function WatchlistPage() {
         className="sticky top-0 z-40"
         style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
       >
-        <AppHeader
-          right={
-            <span
-              className="text-xs font-semibold px-3 py-1.5 rounded-full"
-              style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
-            >
-              {watchlist.length} titles
-            </span>
-          }
-        />
+        <AppHeader />
         <div className="px-4 pb-3">
           <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}>
             {filterTabs.map(({ key, label, count }) => (
@@ -148,7 +133,7 @@ export default function WatchlistPage() {
             <p className="text-xs mt-1" style={{ color: "#dddddd" }}>
               Search for titles to add them here
             </p>
-            {filter === "all" && (
+            {filter === "to_watch" && (
               <Link
                 href="/search"
                 className="mt-4 px-5 py-2.5 rounded-full text-sm font-semibold"
