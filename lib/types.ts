@@ -75,6 +75,17 @@ export interface StreamingProvider {
   display_priority: number;
 }
 
+export interface FriendRequest {
+  id: string;
+  sender: {
+    id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   name: string;

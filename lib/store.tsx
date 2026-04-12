@@ -9,13 +9,14 @@ import {
   ReactNode,
 } from "react";
 import { getClient } from "./supabase/client";
-import type { Recommendation, WatchlistItem, WatchlistStatus, MediaType } from "./types";
+import type { Recommendation, WatchlistItem, WatchlistStatus, MediaType, FriendRequest } from "./types";
 
 interface ToastState { message: string; id: number }
 
 interface AppState {
   recommendations: Recommendation[];
   watchlist: WatchlistItem[];
+  friendRequests: FriendRequest[];
   toast: ToastState | null;
   markWatched: (recId: string) => void;
   markUnwatched: (recId: string) => void;
@@ -39,6 +40,9 @@ interface AppState {
   ) => Promise<void>;
   refreshRecommendations: () => Promise<void>;
   refreshWatchlist: () => Promise<void>;
+  refreshFriendRequests: () => Promise<void>;
+  acceptFriendRequest: (id: string, senderId: string) => Promise<void>;
+  declineFriendRequest: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -46,6 +50,7 @@ const AppContext = createContext<AppState | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const supabase = getClient();
@@ -114,10 +119,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, supabase]);
 
+  const refreshFriendRequests = useCallback(async () => {
+    if (!userId) { setFriendRequests([]); return; }
+    const { data } = await supabase
+      .from("friendships")
+      .select("id, created_at, sender:user_id(id, username, display_name, avatar_url)")
+      .eq("friend_id", userId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (data) {
+      setFriendRequests(
+        data.map((r) => ({
+          id: r.id,
+          sender: (Array.isArray(r.sender) ? r.sender[0] : r.sender) as FriendRequest["sender"],
+          createdAt: r.created_at,
+        }))
+      );
+    }
+  }, [userId, supabase]);
+
   useEffect(() => {
     refreshRecommendations();
     refreshWatchlist();
-  }, [refreshRecommendations, refreshWatchlist]);
+    refreshFriendRequests();
+  }, [refreshRecommendations, refreshWatchlist, refreshFriendRequests]);
 
   const showToast = useCallback((message: string) => {
     const id = Date.now();
@@ -126,6 +152,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setToast((prev) => (prev?.id === id ? null : prev));
     }, 2800);
   }, []);
+
+  const acceptFriendRequest = useCallback(
+    async (id: string, senderId: string) => {
+      if (!userId) return;
+      const { error: updateError } = await supabase
+        .from("friendships")
+        .update({ status: "accepted" })
+        .eq("id", id);
+      if (updateError) { showToast("Could not accept request"); return; }
+
+      // Insert reciprocal row so both users see each other as friends
+      await supabase.from("friendships").upsert(
+        { user_id: userId, friend_id: senderId, status: "accepted" },
+        { onConflict: "user_id,friend_id" }
+      );
+
+      setFriendRequests((prev) => prev.filter((r) => r.id !== id));
+      showToast("Friend added!");
+    },
+    [userId, supabase, showToast]
+  );
+
+  const declineFriendRequest = useCallback(
+    async (id: string) => {
+      await supabase.from("friendships").delete().eq("id", id);
+      setFriendRequests((prev) => prev.filter((r) => r.id !== id));
+    },
+    [supabase]
+  );
 
   const sendRecommendation = useCallback(
     async (
@@ -376,6 +431,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         recommendations,
         watchlist,
+        friendRequests,
         toast,
         markWatched,
         markUnwatched,
@@ -390,6 +446,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sendRecommendation,
         refreshRecommendations,
         refreshWatchlist,
+        refreshFriendRequests,
+        acceptFriendRequest,
+        declineFriendRequest,
       }}
     >
       {children}

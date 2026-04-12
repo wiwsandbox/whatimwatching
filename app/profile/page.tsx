@@ -9,6 +9,7 @@ import PosterImage from "@/components/PosterImage";
 import { getMovie, getTVShow, getDisplayTitle } from "@/lib/tmdb";
 import { useApp } from "@/lib/store";
 import { useAuth } from "@/lib/authContext";
+import AddFriendSheet from "@/components/AddFriendSheet";
 import type { TMDBTitle, WatchlistItem } from "@/lib/types";
 
 export default function ProfilePage() {
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const { user, profile, signOut } = useAuth();
   const router = useRouter();
   const [recentPosters, setRecentPosters] = useState<Array<{ title: TMDBTitle; item: typeof watchlist[0] }>>([]);
+  const [addFriendOpen, setAddFriendOpen] = useState(false);
 
   useEffect(() => {
     const watched = watchlist.filter((w) => w.status === "watched").slice(0, 6);
@@ -104,6 +106,20 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Add Friend */}
+        <button
+          onClick={() => setAddFriendOpen(true)}
+          className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          style={{ background: "#fff0f0", color: "#ff5757", border: "1px solid rgba(255,87,87,0.2)" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="6" cy="5" r="3" stroke="#ff5757" strokeWidth="1.5" />
+            <path d="M1 13C1 10.8 3.2 9 6 9" stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M12 9V13M10 11H14" stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          Add a friend
+        </button>
+
         {/* Recently watched + ratings */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -169,6 +185,7 @@ export default function ProfilePage() {
       </main>
 
       <BottomNav />
+      <AddFriendSheet isOpen={addFriendOpen} onClose={() => setAddFriendOpen(false)} />
     </div>
   );
 }

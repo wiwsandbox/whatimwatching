@@ -119,7 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!existingProfile) {
         // Auto-create a minimal profile row so foreign-key constraints are met
-        await supabase.from("profiles").insert({ id: userId });
+        await supabase.from("profiles").insert({ id: userId, phone });
+      } else {
+        // Keep phone in sync for friend-by-phone lookup
+        await supabase.from("profiles").update({ phone }).eq("id", userId);
       }
 
       return { error: null, isNewUser: !existingProfile };

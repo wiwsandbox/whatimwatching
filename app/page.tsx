@@ -12,7 +12,7 @@ import type { TMDBTitle } from "@/lib/types";
 type Filter = "all" | "unwatched" | "watched";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched } = useApp();
+  const { recommendations, markWatched, markUnwatched, friendRequests, acceptFriendRequest, declineFriendRequest } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [filter, setFilter] = useState<Filter>("all");
   const [loading, setLoading] = useState(true);
@@ -112,7 +112,58 @@ export default function InboxPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 space-y-3 pt-2">
+      <main className="flex-1 px-4 pt-2">
+        {/* Friend requests */}
+        {friendRequests.length > 0 && (
+          <div className="mb-4 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
+              Friend requests
+            </p>
+            {friendRequests.map((req) => {
+              const name = req.sender.display_name || req.sender.username || "Unknown";
+              const avatarColor = "#ff5757";
+              return (
+                <div
+                  key={req.id}
+                  className="flex items-center gap-3 p-3 rounded-2xl"
+                  style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                    style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                  >
+                    {name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
+                    {req.sender.username && (
+                      <p className="text-xs" style={{ color: "#999999" }}>@{req.sender.username}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => declineFriendRequest(req.id)}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                      style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => acceptFriendRequest(req.id, req.sender.id)}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                      style={{ background: "#ff5757", color: "white" }}
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Recommendations */}
+        <div className="space-y-3">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div
@@ -155,6 +206,7 @@ export default function InboxPage() {
             />
           ))
         )}
+        </div>
       </main>
 
       <BottomNav />
