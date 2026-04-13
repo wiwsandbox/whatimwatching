@@ -136,12 +136,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshFriendRequests = useCallback(async () => {
     if (!userId) { setFriendRequests([]); return; }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("friendships")
       .select("id, created_at, sender:user_id(id, username, display_name, avatar_url)")
       .eq("friend_id", userId)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("refreshFriendRequests error:", error);
+      return;
+    }
 
     if (data) {
       setFriendRequests(

@@ -82,11 +82,11 @@ export async function POST(request: NextRequest) {
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
 
   if (accountSid && authToken && fromNumber) {
-    const body =
+    const smsBody =
       `Hey! ${senderName} wants to connect with you on wiw — the app for sharing what you're watching. ` +
       `Join here: https://whatimwatching.vercel.app`;
 
-    const params = new URLSearchParams({ To: phone, From: fromNumber, Body: body });
+    const params = new URLSearchParams({ To: phone, From: fromNumber, Body: smsBody });
 
     try {
       const res = await fetch(
@@ -100,12 +100,22 @@ export async function POST(request: NextRequest) {
           body: params.toString(),
         }
       );
-      const smsSent = res.ok;
-      return NextResponse.json({ success: true, found: false, smsSent });
-    } catch {
-      return NextResponse.json({ success: true, found: false, smsSent: false });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const smsError = errBody?.message || `Twilio error ${res.status}`;
+        console.error("Twilio SMS error:", smsError, errBody);
+        return NextResponse.json({ success: false, found: false, smsSent: false, smsError });
+      }
+
+      return NextResponse.json({ success: true, found: false, smsSent: true });
+    } catch (err) {
+      const smsError = err instanceof Error ? err.message : "Network error sending SMS";
+      console.error("Twilio fetch failed:", smsError);
+      return NextResponse.json({ success: false, found: false, smsSent: false, smsError });
     }
   }
 
-  return NextResponse.json({ success: true, found: false, smsSent: false });
+  // Twilio not configured
+  return NextResponse.json({ success: true, found: false, smsSent: false, noTwilio: true });
 }

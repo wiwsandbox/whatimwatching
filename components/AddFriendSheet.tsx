@@ -75,14 +75,18 @@ export default function AddFriendSheet({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: fullPhone }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({ error: `Server error ${res.status}` }));
 
-      if (!res.ok || json.error) {
-        setResult({ type: "error", message: json.error || "Something went wrong" });
+      if (json.error) {
+        setResult({ type: "error", message: json.error });
       } else if (json.found) {
         setResult({ type: "found" });
       } else if (json.smsSent) {
         setResult({ type: "invited" });
+      } else if (json.smsError) {
+        setResult({ type: "error", message: `Couldn't send invite: ${json.smsError}` });
+      } else if (json.noTwilio) {
+        setResult({ type: "error", message: "No wiw account found for that number and SMS invites aren't configured." });
       } else {
         setResult({ type: "not_found" });
       }
