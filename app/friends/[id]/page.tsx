@@ -13,6 +13,16 @@ import FriendNetworkSheet from "@/components/FriendNetworkSheet";
 
 type Tab = "watched" | "watchlist";
 
+function isUpcoming(title: TMDBTitle | undefined): boolean {
+  if (!title) return false
+  const dateStr = title.release_date || title.first_air_date
+  if (!dateStr) return false
+  const releaseDate = new Date(dateStr)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return releaseDate > today
+}
+
 interface FriendProfile {
   id: string;
   username: string;
@@ -300,6 +310,14 @@ function FriendTitleRow({
           >
             {item.mediaType === "tv" ? "Series" : "Film"}
           </span>
+          {isUpcoming(title) && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium tracking-wide"
+              style={{ background: "#eff6ff", color: "#2563eb" }}
+            >
+              Upcoming
+            </span>
+          )}
           <StreamingProviders id={item.tmdbId} mediaType={item.mediaType} maxShow={3} size="sm" />
           {item.rating && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#fff0f0", color: "#ff5757" }}>
