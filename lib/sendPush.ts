@@ -44,7 +44,7 @@ export async function sendPushToUser(
       type: options.notificationType,
       actor_id: options.senderId ?? null,
       payload: { body, url, ...options.metadata },
-    }).catch(() => {});
+    }).then(() => {}, () => {});
   }
 
   const { data: sub } = await supabase
