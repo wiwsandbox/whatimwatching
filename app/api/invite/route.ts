@@ -57,20 +57,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: friendError.message }, { status: 500 });
     }
 
-    // Notify recipient
-    await supabase.from("notifications").insert({
-      user_id: recipient.id,
-      type: "friend_request",
-      actor_id: user.id,
-      payload: { sender_name: senderName },
-    });
-
-    // Push notification — best-effort
+    // Push notification (also logs to notifications) — best-effort
     sendPushToUser(
       recipient.id,
       "wiw",
       `${senderName} wants to connect with you on wiw`,
-      "/"
+      "/",
+      { senderId: user.id, notificationType: "friend_request", metadata: { sender_name: senderName } }
     ).catch(() => {});
 
     return NextResponse.json({ success: true, found: true });

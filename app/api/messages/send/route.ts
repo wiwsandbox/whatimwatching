@@ -40,7 +40,11 @@ export async function POST(request: NextRequest) {
     ? `${senderName} sent you a message about ${show_title}`
     : `${senderName} sent you a message`
 
-  await sendPushToUser(receiver_id, "wiw", pushBody, "/")
+  await sendPushToUser(receiver_id, "wiw", pushBody, "/", {
+    senderId: user.id,
+    notificationType: "message",
+    metadata: show_title ? { show_title } : undefined,
+  })
 
   return NextResponse.json({ ok: true, message })
 }

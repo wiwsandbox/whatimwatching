@@ -28,7 +28,11 @@ export async function POST(request: NextRequest) {
     body = `${senderName} wants to connect with you on wiw`;
   }
 
-  await sendPushToUser(recipient_user_id, "wiw", body, "/");
+  await sendPushToUser(recipient_user_id, "wiw", body, "/", {
+    senderId: user.id,
+    notificationType: notification_type,
+    metadata: { title },
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -141,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!userId) { setWatchlist([]); return; }
     const { data } = await supabase
       .from("watchlist")
-      .select("id, tmdb_id, media_type, title, poster_path, status, rating, created_at")
+      .select("id, tmdb_id, media_type, title, poster_path, status, rating, source, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -156,6 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: w.status as WatchlistStatus,
           watched: w.status === "watched",
           rating: w.rating ?? null,
+          source: w.source ?? null,
           addedAt: w.created_at,
         }))
       );
@@ -291,6 +292,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 2800);
   }, []);
 
+  const logEvent = useCallback(
+    async (eventType: string, metadata?: Record<string, unknown>) => {
+      if (!userId) return;
+      supabase.from("events").insert({
+        user_id: userId,
+        event_type: eventType,
+        metadata: metadata ?? null,
+      }).then(() => {}).catch(() => {});
+    },
+    [userId, supabase]
+  );
+
   const sendMessage = useCallback(async (
     receiverId: string,
     content: string,
@@ -312,8 +325,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const json = await res.json();
     if (json.error) return { error: json.error };
     showToast("Message sent!");
+    logEvent("message_sent", { receiver_id: receiverId, has_show_context: !!showContext });
     return { error: null };
-  }, [userId, showToast]);
+  }, [userId, showToast, logEvent]);
 
   const markMessagesRead = useCallback(async () => {
     if (!userId) return;
@@ -331,22 +345,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const acceptFriendRequest = useCallback(
     async (id: string, senderId: string) => {
       if (!userId) return;
+      const now = new Date().toISOString();
       const { error: updateError } = await supabase
         .from("friendships")
-        .update({ status: "accepted" })
+        .update({ status: "accepted", accepted_at: now })
         .eq("id", id);
       if (updateError) { showToast("Could not accept request"); return; }
 
       // Insert reciprocal row so both users see each other as friends
       await supabase.from("friendships").upsert(
-        { user_id: userId, friend_id: senderId, status: "accepted" },
+        { user_id: userId, friend_id: senderId, status: "accepted", accepted_at: now },
         { onConflict: "user_id,friend_id" }
       );
 
       setFriendRequests((prev) => prev.filter((r) => r.id !== id));
       showToast("Friend added!");
+      logEvent("friend_accepted", { friend_id: senderId });
     },
-    [userId, supabase, showToast]
+    [userId, supabase, showToast, logEvent]
   );
 
   const declineFriendRequest = useCallback(
@@ -386,6 +402,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       showToast(`Sent to ${friendNames.join(", ")}`);
+      logEvent("recommendation_sent", { tmdb_id: tmdbId, media_type: mediaType, recipient_count: friendIds.length });
 
       // Fire push notifications — best-effort, don't block on failure
       friendIds.forEach((friendId) => {
@@ -402,7 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     },
-    [userId, supabase, showToast]
+    [userId, supabase, showToast, logEvent]
   );
 
   const markWatched = useCallback(
@@ -429,10 +446,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const markWatchedFromRec = useCallback(
     async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
       if (!userId) return;
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from("watchlist")
         .upsert(
-          { user_id: userId, tmdb_id: tmdbId, media_type: mediaType, title, poster_path: posterPath, status: "watched" },
+          { user_id: userId, tmdb_id: tmdbId, media_type: mediaType, title, poster_path: posterPath, status: "watched", source: "recommendation" },
           { onConflict: "user_id,tmdb_id,media_type" }
         )
         .select()
@@ -446,26 +464,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const newItem: WatchlistItem = {
             id: data.id, tmdbId: data.tmdb_id, mediaType: data.media_type as MediaType,
             titleStr: data.title, posterPath: data.poster_path,
-            status: "watched", watched: true, rating: null, addedAt: data.created_at,
+            status: "watched", watched: true, rating: null, source: "recommendation", addedAt: data.created_at,
           };
           return exists ? prev.map((w) => w.tmdbId === tmdbId && w.mediaType === mediaType ? newItem : w) : [newItem, ...prev];
         });
       }
 
-      const now = new Date().toISOString();
-      await supabase.from("recommendations").update({ read_at: now }).eq("id", recId);
+      await supabase.from("recommendations").update({ read_at: now, actioned_at: now, action_type: "watched" }).eq("id", recId);
       setRecommendations((prev) =>
         prev.map((r) => r.id === recId ? { ...r, watched: true, watchedAt: now } : r)
       );
 
       showToast("Marked as watched");
+      logEvent("rec_actioned", { rec_id: recId, action: "watched", tmdb_id: tmdbId, media_type: mediaType });
       fetch("/api/push/rec-accepted", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rec_id: recId, notification_type: "watched" }),
       }).catch(() => {});
     },
-    [userId, supabase, showToast]
+    [userId, supabase, showToast, logEvent]
   );
 
   const dismissRecommendation = useCallback(
@@ -473,21 +491,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const now = new Date().toISOString();
       await supabase
         .from("recommendations")
-        .update({ dismissed_at: now })
+        .update({ dismissed_at: now, actioned_at: now, action_type: "dismissed" })
         .eq("id", recId);
       setRecommendations((prev) => prev.filter((r) => r.id !== recId));
+      logEvent("rec_actioned", { rec_id: recId, action: "dismissed" });
     },
-    [supabase]
+    [supabase, logEvent]
   );
 
   const addRecToWatchlist = useCallback(
     async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
       if (!userId) return;
       // Add to watchlist
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from("watchlist")
         .upsert(
-          { user_id: userId, tmdb_id: tmdbId, media_type: mediaType, title, poster_path: posterPath, status: "to_watch" },
+          { user_id: userId, tmdb_id: tmdbId, media_type: mediaType, title, poster_path: posterPath, status: "to_watch", source: "recommendation" },
           { onConflict: "user_id,tmdb_id,media_type" }
         )
         .select()
@@ -501,26 +521,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const newItem: WatchlistItem = {
             id: data.id, tmdbId: data.tmdb_id, mediaType: data.media_type as MediaType,
             titleStr: data.title, posterPath: data.poster_path,
-            status: data.status as WatchlistStatus, watched: false, rating: null, addedAt: data.created_at,
+            status: data.status as WatchlistStatus, watched: false, rating: null, source: "recommendation", addedAt: data.created_at,
           };
           return exists ? prev : [newItem, ...prev];
         });
       }
 
-      // Mark recommendation as seen
-      const now = new Date().toISOString();
-      await supabase.from("recommendations").update({ read_at: now }).eq("id", recId);
+      await supabase.from("recommendations").update({ read_at: now, actioned_at: now, action_type: "watchlisted" }).eq("id", recId);
       setRecommendations((prev) =>
         prev.map((r) => r.id === recId ? { ...r, watched: true, watchedAt: now } : r)
       );
       showToast("Added to watchlist");
+      logEvent("rec_actioned", { rec_id: recId, action: "watchlisted", tmdb_id: tmdbId, media_type: mediaType });
       fetch("/api/push/rec-accepted", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rec_id: recId, notification_type: "watchlisted" }),
       }).catch(() => {});
     },
-    [userId, supabase, showToast]
+    [userId, supabase, showToast, logEvent]
   );
 
   const addToWatchlist = useCallback(
@@ -537,6 +556,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             poster_path: item.posterPath ?? null,
             status: item.status ?? "to_watch",
             rating: item.rating ?? null,
+            source: item.source ?? null,
           },
           { onConflict: "user_id,tmdb_id,media_type" }
         )
@@ -559,6 +579,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: data.status as WatchlistStatus,
           watched: data.status === "watched",
           rating: data.rating ?? null,
+          source: data.source ?? null,
           addedAt: data.created_at,
         };
         setWatchlist((prev) => {
@@ -571,9 +592,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return [newItem, ...prev];
         });
         showToast("Added to watchlist");
+        logEvent("watchlist_add", { tmdb_id: item.tmdbId, media_type: item.mediaType, source: item.source ?? null });
       }
     },
-    [userId, supabase, showToast]
+    [userId, supabase, showToast, logEvent]
   );
 
   const removeFromWatchlist = useCallback(
@@ -592,8 +614,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setWatchlist((prev) =>
         prev.filter((w) => !(w.tmdbId === tmdbId && w.mediaType === mediaType))
       );
+      logEvent("watchlist_remove", { tmdb_id: tmdbId, media_type: mediaType });
     },
-    [userId, supabase]
+    [userId, supabase, logEvent]
   );
 
   const isInWatchlist = useCallback(
@@ -612,7 +635,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setWatchlistStatus = useCallback(
     async (id: string, status: WatchlistStatus) => {
-      const { error } = await supabase.from("watchlist").update({ status }).eq("id", id);
+      const now = new Date().toISOString();
+      const updates: Record<string, unknown> = { status, updated_at: now };
+      if (status === "watched") updates.watched_at = now;
+      const { error } = await supabase.from("watchlist").update(updates).eq("id", id);
       if (error) {
         console.error("setWatchlistStatus error:", error);
         showToast(`Could not update status: ${error.message}`);
@@ -623,8 +649,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           w.id === id ? { ...w, status, watched: status === "watched" } : w
         )
       );
+      logEvent("watchlist_status_change", { watchlist_id: id, status });
     },
-    [supabase, showToast]
+    [supabase, showToast, logEvent]
   );
 
   const setRating = useCallback(
@@ -648,6 +675,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           prev.map((w) => w.id === existing.id ? { ...w, rating } : w)
         );
         showToast(rating ? `Rated ${rating}/10` : "Rating removed");
+        logEvent("rating_set", { tmdb_id: tmdbId, media_type: mediaType, rating });
       } else {
         // Not in watchlist — add with status "watched"
         const { data, error } = await supabase
@@ -688,10 +716,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ...prev,
           ]);
           showToast(rating ? `Rated ${rating}/10` : "Rating removed");
+          logEvent("rating_set", { tmdb_id: tmdbId, media_type: mediaType, rating });
         }
       }
     },
-    [userId, supabase, watchlist]
+    [userId, supabase, watchlist, logEvent]
   );
 
   const markWatchlistWatched = useCallback(

@@ -16,20 +16,36 @@ function ensureVapid() {
 /**
  * Send a push notification to a user. Silently no-ops if the user has no
  * subscription. Requires SUPABASE_SERVICE_ROLE_KEY in env to bypass RLS.
+ *
+ * Pass options.notificationType to also log the event to the notifications table.
  */
 export async function sendPushToUser(
   userId: string,
   title: string,
   body: string,
-  url = "/"
+  url = "/",
+  options?: {
+    senderId?: string;
+    notificationType?: string;
+    metadata?: Record<string, unknown>;
+  }
 ): Promise<void> {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) return; // Silently skip if not configured
+  if (!serviceRoleKey) return;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     serviceRoleKey
   );
+
+  if (options?.notificationType) {
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      type: options.notificationType,
+      actor_id: options.senderId ?? null,
+      payload: { body, url, ...options.metadata },
+    }).catch(() => {});
+  }
 
   const { data: sub } = await supabase
     .from("push_subscriptions")

@@ -65,6 +65,7 @@ export interface WatchlistItem {
   watched: boolean;
   watchedAt?: string;
   rating?: number | null;
+  source?: string | null;
   title?: TMDBTitle;
 }
 

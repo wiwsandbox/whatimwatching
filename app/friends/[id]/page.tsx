@@ -248,6 +248,7 @@ export default function FriendProfilePage() {
                   posterPath: item.title?.poster_path ?? item.posterPath ?? null,
                   status: "to_watch",
                   rating: null,
+                  source: "friend_watchlist",
                 })
               }
               onMessage={() => {

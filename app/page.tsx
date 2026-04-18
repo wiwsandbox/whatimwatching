@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
@@ -8,6 +8,7 @@ import RecommendationCard from "@/components/RecommendationCard";
 import SendMessageSheet from "@/components/SendMessageSheet";
 import { useApp } from "@/lib/store";
 import { getMovie, getTVShow } from "@/lib/tmdb";
+import { getClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { formatRelativeTime } from "@/lib/mockData";
 import type { TMDBTitle } from "@/lib/types";
@@ -20,6 +21,16 @@ export default function InboxPage() {
   const [tab, setTab] = useState<Tab>("recommendations");
   const [loading, setLoading] = useState(true);
   const [composeOpen, setComposeOpen] = useState(false);
+
+  const supabase = useRef(getClient()).current;
+
+  // Update last_active_at on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user?.id) return;
+      supabase.from("profiles").update({ last_active_at: new Date().toISOString() }).eq("id", session.user.id).then(() => {}).catch(() => {});
+    });
+  }, [supabase]);
 
   // Clear the badge whenever the inbox is opened
   useEffect(() => {

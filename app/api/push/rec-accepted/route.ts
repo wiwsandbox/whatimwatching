@@ -32,7 +32,11 @@ export async function POST(request: NextRequest) {
     ? `${recipientName} has already watched ${rec.title}`
     : `${recipientName} added ${rec.title} to their watchlist`
 
-  await sendPushToUser(rec.sender_id, "wiw", message, "/")
+  await sendPushToUser(rec.sender_id, "wiw", message, "/", {
+    senderId: user.id,
+    notificationType: notification_type === "watched" ? "rec_watched" : "rec_watchlisted",
+    metadata: { rec_id, title: rec.title },
+  })
 
   return NextResponse.json({ ok: true })
 }
