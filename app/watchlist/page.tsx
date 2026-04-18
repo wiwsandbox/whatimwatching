@@ -13,7 +13,7 @@ import type { TMDBTitle, WatchlistItem, WatchlistStatus } from "@/lib/types";
 type Filter = "to_watch" | "watching" | "watched";
 
 const STATUS_LABELS: Record<WatchlistStatus, string> = {
-  to_watch: "Add to Watchlist",
+  to_watch: "To Watch",
   watching: "Watching",
   watched: "Watched",
 };
