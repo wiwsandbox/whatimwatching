@@ -5,22 +5,29 @@ import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
 import RecommendationCard from "@/components/RecommendationCard";
+import SendMessageSheet from "@/components/SendMessageSheet";
 import { useApp } from "@/lib/store";
 import { getMovie, getTVShow } from "@/lib/tmdb";
+import { formatRelativeTime } from "@/lib/mockData";
 import type { TMDBTitle } from "@/lib/types";
 
 type Tab = "friends" | "recommendations";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [tab, setTab] = useState<Tab>("recommendations");
   const [loading, setLoading] = useState(true);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   // Clear the badge whenever the inbox is opened
   useEffect(() => {
     markInboxSeen();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (tab === "friends") markMessagesRead();
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchTitles = useCallback(async () => {
     const toFetch = recommendations.filter(
@@ -94,75 +101,156 @@ export default function InboxPage() {
 
       <main className="flex-1 px-4 pt-2">
         {tab === "friends" ? (
-          friendRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                style={{ background: "#f7f7f7" }}
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-                    stroke="#cccccc"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="9" cy="7" r="4" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <div>
+            {/* New Message button */}
+            <button
+              onClick={() => setComposeOpen(true)}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl mb-4 transition-all active:scale-[0.98]"
+              style={{ background: "#fff0f0", border: "1px solid rgba(255,87,87,0.15)" }}
+            >
+              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#ff5757" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 2H14C14.6 2 15 2.4 15 3V10C15 10.6 14.6 11 14 11H5L2 14V3C2 2.4 2.4 2 2 2Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8 5V8M6.5 6.5H9.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold" style={{ color: "#cccccc" }}>No friend activity</p>
-              <p className="text-xs mt-1" style={{ color: "#dddddd" }}>Friend requests will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
-                Friend requests
-              </p>
-              {friendRequests.map((req) => {
-                const name = req.sender.display_name || req.sender.username || "Unknown";
-                const avatarColor = "#ff5757";
-                return (
-                  <div
-                    key={req.id}
-                    className="flex items-center gap-3 p-3 rounded-2xl"
-                    style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-                  >
+              <div className="text-left">
+                <p className="text-sm font-semibold" style={{ color: "#ff5757" }}>New Message</p>
+                <p className="text-xs" style={{ color: "#999999" }}>Send a message to a friend</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto flex-shrink-0">
+                <path d="M5 3L9 7L5 11" stroke="#ffaaaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {/* Messages */}
+            {messages.length > 0 && (
+              <div className="space-y-2 mb-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
+                  Messages
+                </p>
+                {messages.map((msg) => {
+                  const senderName = msg.sender?.display_name || msg.sender?.username || "Someone";
+                  const avatarColor = msg.sender?.avatar_url?.startsWith("color:")
+                    ? msg.sender.avatar_url.slice(6)
+                    : "#ff5757";
+                  return (
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                      style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                      key={msg.id}
+                      className="p-3 rounded-2xl"
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid #eeeeee",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                        opacity: msg.readAt ? 0.6 : 1,
+                      }}
                     >
-                      {name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
-                      {req.sender.username && (
-                        <p className="text-xs" style={{ color: "#999999" }}>@{req.sender.username}</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                        >
+                          {senderName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{senderName}</span>
+                        {!msg.readAt && (
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#ff5757" }} />
+                        )}
+                        <span className="text-[10px] ml-auto" style={{ color: "#999999" }}>
+                          {formatRelativeTime(msg.createdAt)}
+                        </span>
+                      </div>
+                      {msg.showTitle && (
+                        <div
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg mb-2"
+                          style={{ background: "#f7f7f7" }}
+                        >
+                          {msg.showPosterPath && (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w92${msg.showPosterPath}`}
+                              className="w-7 h-[42px] rounded object-cover flex-shrink-0"
+                              alt={msg.showTitle}
+                            />
+                          )}
+                          <div>
+                            <p className="text-xs font-semibold line-clamp-1" style={{ color: "#1a1a1a" }}>{msg.showTitle}</p>
+                            <p className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>
+                              {msg.mediaType === "tv" ? "Series" : "Film"}
+                            </p>
+                          </div>
+                        </div>
                       )}
+                      <p className="text-sm leading-snug" style={{ color: "#1a1a1a" }}>{msg.content}</p>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => declineFriendRequest(req.id)}
-                        className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                        style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Friend requests */}
+            {friendRequests.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
+                  Friend requests
+                </p>
+                {friendRequests.map((req) => {
+                  const name = req.sender.display_name || req.sender.username || "Unknown";
+                  return (
+                    <div
+                      key={req.id}
+                      className="flex items-center gap-3 p-3 rounded-2xl"
+                      style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{ background: "#ff5757", color: "white", fontFamily: "var(--font-playfair)" }}
                       >
-                        Decline
-                      </button>
-                      <button
-                        onClick={() => acceptFriendRequest(req.id, req.sender.id)}
-                        className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                        style={{ background: "#ff5757", color: "white" }}
-                      >
-                        Accept
-                      </button>
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
+                        {req.sender.username && (
+                          <p className="text-xs" style={{ color: "#999999" }}>@{req.sender.username}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => declineFriendRequest(req.id)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                          style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
+                        >
+                          Decline
+                        </button>
+                        <button
+                          onClick={() => acceptFriendRequest(req.id, req.sender.id)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                          style={{ background: "#ff5757", color: "white" }}
+                        >
+                          Accept
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {friendRequests.length === 0 && messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "#f7f7f7" }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="9" cy="7" r="4" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold" style={{ color: "#cccccc" }}>No friend activity</p>
+                <p className="text-xs mt-1" style={{ color: "#dddddd" }}>Friend requests and messages will appear here</p>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="space-y-3">
             {loading ? (
@@ -209,6 +297,11 @@ export default function InboxPage() {
       </main>
 
       <BottomNav />
+
+      <SendMessageSheet
+        isOpen={composeOpen}
+        onClose={() => setComposeOpen(false)}
+      />
     </div>
   );
 }

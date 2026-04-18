@@ -14,6 +14,25 @@ import type { Recommendation, WatchlistItem, WatchlistStatus, MediaType, FriendR
 
 interface ToastState { message: string; id: number }
 
+interface Message {
+  id: string
+  senderId: string
+  receiverId: string
+  content: string
+  tmdbId?: number | null
+  mediaType?: string | null
+  showTitle?: string | null
+  showPosterPath?: string | null
+  readAt?: string | null
+  createdAt: string
+  sender?: {
+    id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+  } | null
+}
+
 interface AppState {
   recommendations: Recommendation[];
   watchlist: WatchlistItem[];
@@ -44,6 +63,11 @@ interface AppState {
   addRecToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   markWatchedFromRec: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   dismissRecommendation: (recId: string) => Promise<void>;
+  messages: Message[];
+  unreadMessageCount: number;
+  sendMessage: (receiverId: string, content: string, showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }) => Promise<{ error: string | null }>;
+  markMessagesRead: () => Promise<void>;
+  refreshMessages: () => Promise<void>;
   refreshRecommendations: () => Promise<void>;
   refreshWatchlist: () => Promise<void>;
   refreshFriendRequests: () => Promise<void>;
@@ -55,6 +79,7 @@ const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -170,6 +195,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const unreadMessageCount = useMemo(() =>
+    messages.filter((m) => !m.readAt).length
+  , [messages]);
+
   const inboxUnreadCount = useMemo(() => {
     const newRecs = recommendations.filter(
       (r) => !r.watched && r.createdAt > lastInboxSeenAt
@@ -177,14 +206,77 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const newRequests = friendRequests.filter(
       (r) => r.createdAt > lastInboxSeenAt
     ).length;
-    return newRecs + newRequests;
-  }, [recommendations, friendRequests, lastInboxSeenAt]);
+    return newRecs + newRequests + unreadMessageCount;
+  }, [recommendations, friendRequests, lastInboxSeenAt, unreadMessageCount]);
+
+  const refreshMessages = useCallback(async () => {
+    if (!userId) { setMessages([]); return; }
+    const { data } = await supabase
+      .from("messages")
+      .select("id, sender_id, receiver_id, content, tmdb_id, media_type, show_title, show_poster_path, read_at, created_at, sender:sender_id(id, username, display_name, avatar_url)")
+      .eq("receiver_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (data) {
+      setMessages(data.map((m) => ({
+        id: m.id,
+        senderId: m.sender_id,
+        receiverId: m.receiver_id,
+        content: m.content,
+        tmdbId: m.tmdb_id,
+        mediaType: m.media_type,
+        showTitle: m.show_title,
+        showPosterPath: m.show_poster_path,
+        readAt: m.read_at,
+        createdAt: m.created_at,
+        sender: Array.isArray(m.sender) ? m.sender[0] : m.sender,
+      })));
+    }
+  }, [userId, supabase]);
+
+  const sendMessage = useCallback(async (
+    receiverId: string,
+    content: string,
+    showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }
+  ): Promise<{ error: string | null }> => {
+    if (!userId) return { error: "Not authenticated" };
+    const res = await fetch("/api/messages/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        receiver_id: receiverId,
+        content,
+        tmdb_id: showContext?.tmdbId ?? null,
+        media_type: showContext?.mediaType ?? null,
+        show_title: showContext?.showTitle ?? null,
+        show_poster_path: showContext?.showPosterPath ?? null,
+      }),
+    });
+    const json = await res.json();
+    if (json.error) return { error: json.error };
+    showToast("Message sent!");
+    return { error: null };
+  }, [userId, showToast]);
+
+  const markMessagesRead = useCallback(async () => {
+    if (!userId) return;
+    const unreadIds = messages.filter((m) => !m.readAt).map((m) => m.id);
+    if (unreadIds.length === 0) return;
+    await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds);
+    setMessages((prev) =>
+      prev.map((m) => unreadIds.includes(m.id) ? { ...m, readAt: new Date().toISOString() } : m)
+    );
+  }, [userId, supabase, messages]);
 
   useEffect(() => {
     refreshRecommendations();
     refreshWatchlist();
     refreshFriendRequests();
-  }, [refreshRecommendations, refreshWatchlist, refreshFriendRequests]);
+    refreshMessages();
+  }, [refreshRecommendations, refreshWatchlist, refreshFriendRequests, refreshMessages]);
 
   // Real-time: refresh inbox when a new recommendation arrives
   useEffect(() => {
@@ -213,6 +305,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId, supabase, refreshFriendRequests]);
+
+  // Real-time: refresh when a new message arrives
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel("messages-inbox")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `receiver_id=eq.${userId}` },
+        () => { refreshMessages(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, supabase, refreshMessages]);
 
   const showToast = useCallback((message: string) => {
     const id = Date.now();
@@ -616,6 +722,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addRecToWatchlist,
         markWatchedFromRec,
         dismissRecommendation,
+        messages,
+        unreadMessageCount,
+        sendMessage,
+        markMessagesRead,
+        refreshMessages,
         refreshRecommendations,
         refreshWatchlist,
         refreshFriendRequests,

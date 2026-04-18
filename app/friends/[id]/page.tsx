@@ -10,6 +10,7 @@ import { getClient } from "@/lib/supabase/client";
 import { useApp } from "@/lib/store";
 import type { TMDBTitle, WatchlistItem, WatchlistStatus, MediaType } from "@/lib/types";
 import FriendNetworkSheet from "@/components/FriendNetworkSheet";
+import SendMessageSheet from "@/components/SendMessageSheet";
 
 type Tab = "watched" | "watchlist";
 
@@ -49,6 +50,8 @@ export default function FriendProfilePage() {
   const [notFound, setNotFound] = useState(false);
   const [networkSheetOpen, setNetworkSheetOpen] = useState(false);
   const [friendCount, setFriendCount] = useState<number>(0);
+  const [messageSheetOpen, setMessageSheetOpen] = useState(false);
+  const [selectedMessageItem, setSelectedMessageItem] = useState<EnrichedItem | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -247,6 +250,10 @@ export default function FriendProfilePage() {
                   rating: null,
                 })
               }
+              onMessage={() => {
+                setSelectedMessageItem(item);
+                setMessageSheetOpen(true);
+              }}
             />
           ))
         )}
@@ -258,6 +265,19 @@ export default function FriendProfilePage() {
         friendName={displayName}
         friendId={friendId}
       />
+
+      <SendMessageSheet
+        isOpen={messageSheetOpen}
+        onClose={() => { setMessageSheetOpen(false); setSelectedMessageItem(null); }}
+        preselectedFriendId={friendId}
+        preselectedFriendName={displayName}
+        showContext={selectedMessageItem ? {
+          tmdbId: selectedMessageItem.tmdbId,
+          mediaType: selectedMessageItem.mediaType,
+          showTitle: selectedMessageItem.title ? getDisplayTitle(selectedMessageItem.title) : selectedMessageItem.titleStr || "",
+          posterPath: selectedMessageItem.title?.poster_path ?? selectedMessageItem.posterPath ?? null,
+        } : null}
+      />
     </div>
   );
 }
@@ -266,10 +286,12 @@ function FriendTitleRow({
   item,
   isInWatchlist,
   onAdd,
+  onMessage,
 }: {
   item: EnrichedItem
   isInWatchlist: boolean
   onAdd: () => void
+  onMessage: () => void
 }) {
   const title = item.title;
   const displayTitle = title ? getDisplayTitle(title) : item.titleStr || "Loading…";
@@ -327,13 +349,27 @@ function FriendTitleRow({
         </div>
       </div>
 
-      <button
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onMessage()
+          }}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+          style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1.5 1.5H12.5C13 1.5 13.5 1.9 13.5 2.5V8.5C13.5 9.1 13 9.5 12.5 9.5H4.5L1.5 12.5V2.5C1.5 1.9 1.9 1.5 1.5 1.5Z" stroke="#999999" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
           if (!isInWatchlist) onAdd()
         }}
-        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+        className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
         style={
           isInWatchlist
             ? { background: "#f7f7f7", border: "1px solid #eeeeee" }
@@ -349,7 +385,8 @@ function FriendTitleRow({
             <path d="M7 3V11M3 7H11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         )}
-      </button>
+        </button>
+      </div>
     </Link>
   );
 }
