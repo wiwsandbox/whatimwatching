@@ -351,6 +351,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         prev.map((r) => r.id === recId ? { ...r, watched: true, watchedAt: now } : r)
       );
       showToast("Added to watchlist");
+      fetch("/api/push/rec-accepted", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rec_id: recId }),
+      }).catch(() => {});
     },
     [userId, supabase, showToast]
   );
