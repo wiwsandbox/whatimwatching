@@ -48,8 +48,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <body className="min-h-screen" style={{ background: "#ffffff", color: "#1a1a1a" }}>
+        <SplashScreen />
         <div className="mx-auto w-full max-w-[390px] min-h-screen relative overflow-x-hidden" style={{ background: "#ffffff" }}>
-          <SplashScreen />
           <AuthProvider>
             <AppProvider>
               {children}
