@@ -7,6 +7,7 @@ import PosterImage from "@/components/PosterImage";
 import StreamingProviders from "@/components/StreamingProviders";
 import { getMovie, getTVShow, getDisplayTitle, getYear } from "@/lib/tmdb";
 import { getClient } from "@/lib/supabase/client";
+import { useApp } from "@/lib/store";
 import type { TMDBTitle, WatchlistItem, WatchlistStatus, MediaType } from "@/lib/types";
 import FriendNetworkSheet from "@/components/FriendNetworkSheet";
 
@@ -27,6 +28,7 @@ export default function FriendProfilePage() {
   const router = useRouter();
   const friendId = params.id as string;
   const supabase = getClient();
+  const { addToWatchlist, isInWatchlist: checkInWatchlist } = useApp();
 
   const [friend, setFriend] = useState<FriendProfile | null>(null);
   const [watchedItems, setWatchedItems] = useState<WatchlistItem[]>([]);
@@ -220,7 +222,23 @@ export default function FriendProfilePage() {
             <p className="text-sm" style={{ color: "#cccccc" }}>Nothing here yet</p>
           </div>
         ) : (
-          activeList.map((item) => <FriendTitleRow key={item.id} item={item} />)
+          activeList.map((item) => (
+            <FriendTitleRow
+              key={item.id}
+              item={item}
+              isInWatchlist={checkInWatchlist(item.tmdbId, item.mediaType)}
+              onAdd={() =>
+                addToWatchlist({
+                  tmdbId: item.tmdbId,
+                  mediaType: item.mediaType,
+                  titleStr: item.titleStr,
+                  posterPath: item.title?.poster_path ?? item.posterPath ?? null,
+                  status: "to_watch",
+                  rating: null,
+                })
+              }
+            />
+          ))
         )}
       </div>
 
@@ -234,7 +252,15 @@ export default function FriendProfilePage() {
   );
 }
 
-function FriendTitleRow({ item }: { item: EnrichedItem }) {
+function FriendTitleRow({
+  item,
+  isInWatchlist,
+  onAdd,
+}: {
+  item: EnrichedItem
+  isInWatchlist: boolean
+  onAdd: () => void
+}) {
   const title = item.title;
   const displayTitle = title ? getDisplayTitle(title) : item.titleStr || "Loading…";
   const year = title ? getYear(title) : "";
@@ -283,9 +309,29 @@ function FriendTitleRow({ item }: { item: EnrichedItem }) {
         </div>
       </div>
 
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-        <path d="M5 3L9 7L5 11" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (!isInWatchlist) onAdd()
+        }}
+        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+        style={
+          isInWatchlist
+            ? { background: "#f7f7f7", border: "1px solid #eeeeee" }
+            : { background: "#ff5757" }
+        }
+      >
+        {isInWatchlist ? (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 7L6 10L11 4" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 3V11M3 7H11" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
     </Link>
   );
 }
