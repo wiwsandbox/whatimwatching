@@ -42,37 +42,16 @@ export default function FriendNetworkSheet({
     setFriends([]);
 
     async function fetchData() {
-      const supabase = getClient();
+      const res = await fetch(`/api/friend-network?friendId=${friendId}`);
+      if (!res.ok) { setLoading(false); return; }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const myId = session?.user?.id ?? null;
-      setCurrentUserId(myId);
+      const json = await res.json();
+      setFriends(json.friends ?? []);
+      setCurrentUserId(json.currentUserId ?? null);
 
-      const { data: fofData } = await supabase
-        .from("friendships")
-        .select("friend:friend_id(id, username, display_name, avatar_url)")
-        .eq("user_id", friendId)
-        .eq("status", "accepted");
-
-      if (fofData) {
-        const mapped = fofData
-          .map((row) => (Array.isArray(row.friend) ? row.friend[0] : row.friend))
-          .filter(Boolean)
-          .filter((f) => f.id !== myId) as FriendProfile[];
-        setFriends(mapped);
-      }
-
-      if (myId) {
-        const { data: myFriends } = await supabase
-          .from("friendships")
-          .select("friend_id, status")
-          .eq("user_id", myId);
-
-        if (myFriends) {
-          setMyFriendIds(new Set(myFriends.filter((f) => f.status === "accepted").map((f) => f.friend_id)));
-          setPendingIds(new Set(myFriends.filter((f) => f.status === "pending").map((f) => f.friend_id)));
-        }
-      }
+      const myFriends: { friend_id: string; status: string }[] = json.myFriends ?? [];
+      setMyFriendIds(new Set(myFriends.filter((f) => f.status === "accepted").map((f) => f.friend_id)));
+      setPendingIds(new Set(myFriends.filter((f) => f.status === "pending").map((f) => f.friend_id)));
 
       setLoading(false);
     }
