@@ -299,7 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user_id: userId,
         event_type: eventType,
         metadata: metadata ?? null,
-      }).then(() => {}).catch(() => {});
+      }).then(() => {}, () => {});
     },
     [userId, supabase]
   );
