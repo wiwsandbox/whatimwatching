@@ -8,6 +8,7 @@ import RecommendationCard from "@/components/RecommendationCard";
 import SendMessageSheet from "@/components/SendMessageSheet";
 import { useApp } from "@/lib/store";
 import { getMovie, getTVShow } from "@/lib/tmdb";
+import Image from "next/image";
 import { formatRelativeTime } from "@/lib/mockData";
 import type { TMDBTitle } from "@/lib/types";
 
@@ -166,10 +167,12 @@ export default function InboxPage() {
                           style={{ background: "#f7f7f7" }}
                         >
                           {msg.showPosterPath && (
-                            <img
+                            <Image
                               src={`https://image.tmdb.org/t/p/w92${msg.showPosterPath}`}
-                              className="w-7 h-[42px] rounded object-cover flex-shrink-0"
-                              alt={msg.showTitle}
+                              alt={msg.showTitle ?? ""}
+                              width={28}
+                              height={42}
+                              className="rounded object-cover flex-shrink-0"
                             />
                           )}
                           <div>

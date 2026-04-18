@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { getClient } from "@/lib/supabase/client";
 import { useApp } from "@/lib/store";
 
@@ -132,10 +133,12 @@ export default function SendMessageSheet({
           {showContext && (
             <div className="flex items-center gap-3 p-3 rounded-xl mb-4" style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}>
               {showContext.posterPath && (
-                <img
+                <Image
                   src={`https://image.tmdb.org/t/p/w92${showContext.posterPath}`}
-                  className="w-10 h-[60px] rounded-lg object-cover flex-shrink-0"
                   alt={showContext.showTitle}
+                  width={40}
+                  height={60}
+                  className="rounded-lg object-cover flex-shrink-0"
                 />
               )}
               <div>
