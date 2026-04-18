@@ -234,43 +234,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, supabase]);
 
-  const sendMessage = useCallback(async (
-    receiverId: string,
-    content: string,
-    showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }
-  ): Promise<{ error: string | null }> => {
-    if (!userId) return { error: "Not authenticated" };
-    const res = await fetch("/api/messages/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        receiver_id: receiverId,
-        content,
-        tmdb_id: showContext?.tmdbId ?? null,
-        media_type: showContext?.mediaType ?? null,
-        show_title: showContext?.showTitle ?? null,
-        show_poster_path: showContext?.showPosterPath ?? null,
-      }),
-    });
-    const json = await res.json();
-    if (json.error) return { error: json.error };
-    showToast("Message sent!");
-    return { error: null };
-  }, [userId, showToast]);
-
-  const markMessagesRead = useCallback(async () => {
-    if (!userId) return;
-    const unreadIds = messages.filter((m) => !m.readAt).map((m) => m.id);
-    if (unreadIds.length === 0) return;
-    await supabase
-      .from("messages")
-      .update({ read_at: new Date().toISOString() })
-      .in("id", unreadIds);
-    setMessages((prev) =>
-      prev.map((m) => unreadIds.includes(m.id) ? { ...m, readAt: new Date().toISOString() } : m)
-    );
-  }, [userId, supabase, messages]);
-
   useEffect(() => {
     refreshRecommendations();
     refreshWatchlist();
@@ -327,6 +290,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setToast((prev) => (prev?.id === id ? null : prev));
     }, 2800);
   }, []);
+
+  const sendMessage = useCallback(async (
+    receiverId: string,
+    content: string,
+    showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }
+  ): Promise<{ error: string | null }> => {
+    if (!userId) return { error: "Not authenticated" };
+    const res = await fetch("/api/messages/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        receiver_id: receiverId,
+        content,
+        tmdb_id: showContext?.tmdbId ?? null,
+        media_type: showContext?.mediaType ?? null,
+        show_title: showContext?.showTitle ?? null,
+        show_poster_path: showContext?.showPosterPath ?? null,
+      }),
+    });
+    const json = await res.json();
+    if (json.error) return { error: json.error };
+    showToast("Message sent!");
+    return { error: null };
+  }, [userId, showToast]);
+
+  const markMessagesRead = useCallback(async () => {
+    if (!userId) return;
+    const unreadIds = messages.filter((m) => !m.readAt).map((m) => m.id);
+    if (unreadIds.length === 0) return;
+    await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds);
+    setMessages((prev) =>
+      prev.map((m) => unreadIds.includes(m.id) ? { ...m, readAt: new Date().toISOString() } : m)
+    );
+  }, [userId, supabase, messages]);
 
   const acceptFriendRequest = useCallback(
     async (id: string, senderId: string) => {
