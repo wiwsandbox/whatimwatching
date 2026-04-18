@@ -93,12 +93,11 @@ export default function FriendProfilePage() {
         setTitleCache(newEntries);
       }
 
-      const { count: fc } = await supabase
-        .from("friendships")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", friendId)
-        .eq("status", "accepted");
-      if (fc !== null) setFriendCount(fc);
+      const countRes = await fetch(`/api/friend-network?friendId=${friendId}`);
+      if (countRes.ok) {
+        const countJson = await countRes.json();
+        setFriendCount(countJson.totalCount ?? 0);
+      }
 
       setLoading(false);
     }

@@ -140,26 +140,30 @@ export default function FriendNetworkSheet({
                     </div>
                     <div className="flex-shrink-0">
                       {isMyFriend ? (
-                        <span
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ background: "#f7f7f7", color: "#999999" }}
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}
                         >
-                          Friends
-                        </span>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8L6.5 11.5L13 5" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
                       ) : isPending ? (
                         <span
                           className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ background: "#f7f7f7", color: "#999999" }}
+                          style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
                         >
                           Pending
                         </span>
                       ) : (
                         <button
                           onClick={() => sendFriendRequest(f.id)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95"
-                          style={{ background: "#ff5757", color: "white" }}
+                          className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+                          style={{ background: "#ff5757" }}
                         >
-                          Add
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 3V13M3 8H13" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+                          </svg>
                         </button>
                       )}
                     </div>

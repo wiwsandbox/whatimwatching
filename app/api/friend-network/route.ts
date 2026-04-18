@@ -24,10 +24,12 @@ export async function GET(request: NextRequest) {
     .eq("user_id", friendId)
     .eq("status", "accepted");
 
-  const friends = (fofData ?? [])
+  const allFriends = (fofData ?? [])
     .map((row: { friend: unknown }) => (Array.isArray(row.friend) ? row.friend[0] : row.friend))
-    .filter(Boolean)
-    .filter((f: { id: string }) => f.id !== user.id);
+    .filter(Boolean) as { id: string }[];
+
+  const totalCount = allFriends.length;
+  const friends = allFriends.filter((f) => f.id !== user.id);
 
   // Fetch caller's own friendships so the client can show Add/Pending/Friends state
   const { data: myFriends } = await supabase
@@ -35,5 +37,5 @@ export async function GET(request: NextRequest) {
     .select("friend_id, status")
     .eq("user_id", user.id);
 
-  return NextResponse.json({ friends, myFriends: myFriends ?? [], currentUserId: user.id });
+  return NextResponse.json({ friends, myFriends: myFriends ?? [], currentUserId: user.id, totalCount });
 }
