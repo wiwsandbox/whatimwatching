@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { rec_id } = await request.json()
+  const { rec_id, notification_type } = await request.json()
   if (!rec_id) return NextResponse.json({ error: "Missing rec_id" }, { status: 400 })
 
   const { data: rec } = await supabase
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!rec) return NextResponse.json({ error: "Recommendation not found" }, { status: 404 })
-
   if (rec.sender_id === user.id) return NextResponse.json({ ok: true })
 
   const { data: profile } = await supabase
@@ -29,12 +28,11 @@ export async function POST(request: NextRequest) {
 
   const recipientName = profile?.display_name || profile?.username || "Someone"
 
-  await sendPushToUser(
-    rec.sender_id,
-    "wiw",
-    `${recipientName} added ${rec.title} to their watchlist`,
-    "/"
-  )
+  const message = notification_type === "watched"
+    ? `${recipientName} has already watched ${rec.title}`
+    : `${recipientName} added ${rec.title} to their watchlist`
+
+  await sendPushToUser(rec.sender_id, "wiw", message, "/")
 
   return NextResponse.json({ ok: true })
 }

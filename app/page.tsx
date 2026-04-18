@@ -12,7 +12,7 @@ import type { TMDBTitle } from "@/lib/types";
 type Tab = "friends" | "recommendations";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [tab, setTab] = useState<Tab>("recommendations");
   const [loading, setLoading] = useState(true);
@@ -199,6 +199,8 @@ export default function InboxPage() {
                   onMarkWatched={markWatched}
                   onMarkUnwatched={markUnwatched}
                   onAddToWatchlist={addRecToWatchlist}
+                  onMarkWatchedFromRec={markWatchedFromRec}
+                  onDismiss={dismissRecommendation}
                 />
               ))
             )}

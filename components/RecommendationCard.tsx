@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import PosterImage from "./PosterImage";
 import StreamingProviders from "./StreamingProviders";
@@ -13,6 +12,8 @@ interface RecommendationCardProps {
   onMarkWatched: (id: string) => void;
   onMarkUnwatched: (id: string) => void;
   onAddToWatchlist: (recId: string, tmdbId: number, mediaType: import("@/lib/types").MediaType, title: string, posterPath: string | null) => void;
+  onMarkWatchedFromRec: (recId: string, tmdbId: number, mediaType: import("@/lib/types").MediaType, title: string, posterPath: string | null) => void;
+  onDismiss: (recId: string) => void;
 }
 
 export default function RecommendationCard({
@@ -20,22 +21,14 @@ export default function RecommendationCard({
   onMarkWatched,
   onMarkUnwatched,
   onAddToWatchlist,
+  onMarkWatchedFromRec,
+  onDismiss,
 }: RecommendationCardProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
   const tmdbTitle = rec.tmdbTitle;
   const displayTitle = tmdbTitle ? getDisplayTitle(tmdbTitle) : rec.title || "Loading…";
   const year = tmdbTitle ? getYear(tmdbTitle) : "";
   const senderName = rec.sender?.display_name || rec.sender?.username || "Someone";
   const posterPath = tmdbTitle?.poster_path ?? rec.posterPath ?? null;
-
-  const handleToggleWatched = () => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      if (rec.watched) onMarkUnwatched(rec.id);
-      else onMarkWatched(rec.id);
-      setIsAnimating(false);
-    }, 200);
-  };
 
   return (
     <div
@@ -47,17 +40,15 @@ export default function RecommendationCard({
         boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
       }}
     >
-      {rec.watched && (
-        <div
-          className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold"
-          style={{ background: "#ff5757", color: "#fff" }}
-        >
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-            <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Watched
-        </div>
-      )}
+      <button
+        onClick={() => onDismiss(rec.id)}
+        className="absolute top-3 right-3 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90"
+        style={{ background: "#f0f0f0", border: "1px solid #e0e0e0" }}
+      >
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+          <path d="M1 1L7 7M7 1L1 7" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </button>
 
       <div className="flex gap-3 p-3">
         {/* Poster */}
@@ -125,7 +116,7 @@ export default function RecommendationCard({
 
           {/* Actions */}
           {!rec.watched ? (
-            <div className="flex items-center gap-2 mt-2.5">
+            <div className="flex items-center gap-2 mt-2.5 flex-wrap">
               <button
                 onClick={() => onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95"
@@ -138,30 +129,27 @@ export default function RecommendationCard({
                 Add to Watchlist
               </button>
               <button
-                onClick={handleToggleWatched}
-                disabled={isAnimating}
+                onClick={() => onMarkWatchedFromRec(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95"
                 style={{ background: "#f7f7f7", color: "#666666", border: "1px solid #eeeeee" }}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M2 6L5 9L10 3" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Mark seen
+                Watched
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 mt-2.5">
-              <button
-                onClick={handleToggleWatched}
-                disabled={isAnimating}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all active:scale-95"
+              <span
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold"
                 style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M2 6L5 9L10 3" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Seen
-              </button>
+                Actioned
+              </span>
               <Link
                 href={`/title/${rec.mediaType}-${rec.tmdbId}`}
                 className="flex items-center gap-1 text-xs rounded-full px-3 py-1.5 transition-all active:scale-95"

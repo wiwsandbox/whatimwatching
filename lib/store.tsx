@@ -42,6 +42,8 @@ interface AppState {
     note: string
   ) => Promise<{ error: string | null }>;
   addRecToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
+  markWatchedFromRec: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
+  dismissRecommendation: (recId: string) => Promise<void>;
   refreshRecommendations: () => Promise<void>;
   refreshWatchlist: () => Promise<void>;
   refreshFriendRequests: () => Promise<void>;
@@ -84,6 +86,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sender:sender_id(id, username, display_name, avatar_url)
       `)
       .eq("receiver_id", userId)
+      .is("dismissed_at", null)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -317,6 +320,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [supabase]
   );
 
+  const markWatchedFromRec = useCallback(
+    async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
+      if (!userId) return;
+      const { data, error } = await supabase
+        .from("watchlist")
+        .upsert(
+          { user_id: userId, tmdb_id: tmdbId, media_type: mediaType, title, poster_path: posterPath, status: "watched" },
+          { onConflict: "user_id,tmdb_id,media_type" }
+        )
+        .select()
+        .single();
+
+      if (error) { showToast(`Could not save: ${error.message}`); return; }
+
+      if (data) {
+        setWatchlist((prev) => {
+          const exists = prev.some((w) => w.tmdbId === tmdbId && w.mediaType === mediaType);
+          const newItem: WatchlistItem = {
+            id: data.id, tmdbId: data.tmdb_id, mediaType: data.media_type as MediaType,
+            titleStr: data.title, posterPath: data.poster_path,
+            status: "watched", watched: true, rating: null, addedAt: data.created_at,
+          };
+          return exists ? prev.map((w) => w.tmdbId === tmdbId && w.mediaType === mediaType ? newItem : w) : [newItem, ...prev];
+        });
+      }
+
+      const now = new Date().toISOString();
+      await supabase.from("recommendations").update({ read_at: now }).eq("id", recId);
+      setRecommendations((prev) =>
+        prev.map((r) => r.id === recId ? { ...r, watched: true, watchedAt: now } : r)
+      );
+
+      showToast("Marked as watched");
+      fetch("/api/push/rec-accepted", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rec_id: recId, notification_type: "watched" }),
+      }).catch(() => {});
+    },
+    [userId, supabase, showToast]
+  );
+
+  const dismissRecommendation = useCallback(
+    async (recId: string) => {
+      const now = new Date().toISOString();
+      await supabase
+        .from("recommendations")
+        .update({ dismissed_at: now })
+        .eq("id", recId);
+      setRecommendations((prev) => prev.filter((r) => r.id !== recId));
+    },
+    [supabase]
+  );
+
   const addRecToWatchlist = useCallback(
     async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
       if (!userId) return;
@@ -354,7 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       fetch("/api/push/rec-accepted", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rec_id: recId }),
+        body: JSON.stringify({ rec_id: recId, notification_type: "watchlisted" }),
       }).catch(() => {});
     },
     [userId, supabase, showToast]
@@ -557,6 +614,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showToast,
         sendRecommendation,
         addRecToWatchlist,
+        markWatchedFromRec,
+        dismissRecommendation,
         refreshRecommendations,
         refreshWatchlist,
         refreshFriendRequests,
