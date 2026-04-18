@@ -8,6 +8,7 @@ import StreamingProviders from "@/components/StreamingProviders";
 import { getMovie, getTVShow, getDisplayTitle, getYear } from "@/lib/tmdb";
 import { getClient } from "@/lib/supabase/client";
 import type { TMDBTitle, WatchlistItem, WatchlistStatus, MediaType } from "@/lib/types";
+import FriendNetworkSheet from "@/components/FriendNetworkSheet";
 
 type Tab = "watched" | "watchlist";
 
@@ -34,6 +35,8 @@ export default function FriendProfilePage() {
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [networkSheetOpen, setNetworkSheetOpen] = useState(false);
+  const [friendCount, setFriendCount] = useState<number>(0);
 
   useEffect(() => {
     async function load() {
@@ -89,6 +92,13 @@ export default function FriendProfilePage() {
         });
         setTitleCache(newEntries);
       }
+
+      const { count: fc } = await supabase
+        .from("friendships")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", friendId)
+        .eq("status", "accepted");
+      if (fc !== null) setFriendCount(fc);
 
       setLoading(false);
     }
@@ -154,25 +164,32 @@ export default function FriendProfilePage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div
-          className="flex items-center justify-around py-3 rounded-2xl mb-5"
-          style={{ background: "#f7f7f7" }}
+        {/* Friends card */}
+        <button
+          onClick={() => setNetworkSheetOpen(true)}
+          className="w-full flex items-center justify-between p-4 rounded-2xl mb-5 transition-all active:scale-[0.98]"
+          style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}
         >
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-lg font-bold" style={{ color: "#1a1a1a", fontFamily: "var(--font-playfair)" }}>
-              {loading ? "—" : watchedItems.length}
-            </span>
-            <span className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>Watched</span>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#fff0f0" }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="7" cy="6" r="3.5" stroke="#ff5757" strokeWidth="1.5" />
+                <path d="M1 15C1 12.2 3.7 10 7 10" stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="13" cy="8" r="2.5" stroke="#ff5757" strokeWidth="1.5" />
+                <path d="M10 15C10 13.1 11.3 12 13 12C14.7 12 16 13.1 16 15" stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Friends</p>
+              <p className="text-xs" style={{ color: "#999999" }}>
+                {loading ? "—" : `${friendCount} connection${friendCount !== 1 ? "s" : ""}`}
+              </p>
+            </div>
           </div>
-          <div className="w-px h-8" style={{ background: "#eeeeee" }} />
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-lg font-bold" style={{ color: "#1a1a1a", fontFamily: "var(--font-playfair)" }}>
-              {loading ? "—" : toWatchItems.length}
-            </span>
-            <span className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>To watch</span>
-          </div>
-        </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+            <path d="M5 3L9 7L5 11" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
 
         {/* Tabs */}
         <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}>
@@ -207,6 +224,13 @@ export default function FriendProfilePage() {
           activeList.map((item) => <FriendTitleRow key={item.id} item={item} />)
         )}
       </div>
+
+      <FriendNetworkSheet
+        isOpen={networkSheetOpen}
+        onClose={() => setNetworkSheetOpen(false)}
+        friendName={displayName}
+        friendId={friendId}
+      />
     </div>
   );
 }
