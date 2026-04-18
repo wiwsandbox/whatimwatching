@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { getClient } from "@/lib/supabase/client";
 
 interface FriendProfile {
@@ -126,18 +127,24 @@ export default function FriendNetworkSheet({
                     className="flex items-center gap-3 p-3 rounded-2xl"
                     style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                   >
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                      style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                    <Link
+                      href={`/friends/${f.id}`}
+                      onClick={onClose}
+                      className="flex items-center gap-3 flex-1 min-w-0"
                     >
-                      {name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
-                      {f.username && (
-                        <p className="text-xs" style={{ color: "#999999" }}>@{f.username}</p>
-                      )}
-                    </div>
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                      >
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
+                        {f.username && (
+                          <p className="text-xs" style={{ color: "#999999" }}>@{f.username}</p>
+                        )}
+                      </div>
+                    </Link>
                     <div className="flex-shrink-0">
                       {isMyFriend ? (
                         <div
