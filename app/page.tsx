@@ -28,7 +28,7 @@ export default function InboxPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user?.id) return;
-      supabase.from("profiles").update({ last_active_at: new Date().toISOString() }).eq("id", session.user.id).then(() => {}).catch(() => {});
+      supabase.from("profiles").update({ last_active_at: new Date().toISOString() }).eq("id", session.user.id).then(() => {}, () => {});
     });
   }, [supabase]);
 
