@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/authContext";
 import ToastDisplay from "@/components/ToastDisplay";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import PushSetup from "@/components/PushSetup";
+import SplashScreen from "@/components/SplashScreen";
 
 const playfair = Playfair_Display({
   weight: "900",
@@ -48,6 +49,7 @@ export default function RootLayout({
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <body className="min-h-screen" style={{ background: "#ffffff", color: "#1a1a1a" }}>
         <div className="mx-auto w-full max-w-[390px] min-h-screen relative overflow-x-hidden" style={{ background: "#ffffff" }}>
+          <SplashScreen />
           <AuthProvider>
             <AppProvider>
               {children}
