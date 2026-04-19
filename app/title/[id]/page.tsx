@@ -30,6 +30,10 @@ export default function TitleDetailPage() {
   const [recommendOpen, setRecommendOpen] = useState(false);
   const [rateOpen, setRateOpen] = useState(false);
 
+  const [survivorActive, setSurvivorActive] = useState(false);
+  const [overlayFading, setOverlayFading] = useState(false);
+  const [tribeTextVisible, setTribeTextVisible] = useState(false);
+
   const { addToWatchlist, removeFromWatchlist, isInWatchlist, getWatchlistItem, setWatchlistStatus, setRating } = useApp();
   const inWatchlist = isInWatchlist(tmdbId, mediaType);
   const watchlistItem = getWatchlistItem(tmdbId, mediaType);
@@ -39,6 +43,33 @@ export default function TitleDetailPage() {
     const fetch = mediaType === "movie" ? getMovie(tmdbId) : getTVShow(tmdbId);
     fetch.then(setTitle).catch(() => setError(true)).finally(() => setLoading(false));
   }, [tmdbId, mediaType]);
+
+  useEffect(() => {
+    if (tmdbId !== 1586) return;
+    if (sessionStorage.getItem("survivorSeen")) return;
+    const t = setTimeout(() => {
+      setSurvivorActive(true);
+      sessionStorage.setItem("survivorSeen", "1");
+    }, 400);
+    return () => clearTimeout(t);
+  }, [tmdbId]);
+
+  useEffect(() => {
+    if (!survivorActive) return;
+    const textTimer = setTimeout(() => setTribeTextVisible(true), 800);
+    const fadeTimer = setTimeout(() => setOverlayFading(true), 3500);
+    const hideTimer = setTimeout(() => {
+      setSurvivorActive(false);
+      setOverlayFading(false);
+      setTribeTextVisible(false);
+    }, 4100);
+    return () => { clearTimeout(textTimer); clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+  }, [survivorActive]);
+
+  const dismissSurvivor = () => {
+    setOverlayFading(true);
+    setTimeout(() => { setSurvivorActive(false); setOverlayFading(false); setTribeTextVisible(false); }, 600);
+  };
 
   if (loading) {
     return (
@@ -285,6 +316,196 @@ export default function TitleDetailPage() {
         titleName={displayTitle}
         onRate={(rating) => setRating(tmdbId, mediaType, rating)}
       />
+
+      {survivorActive && (
+        <SurvivorOverlay fading={overlayFading} textVisible={tribeTextVisible} onDismiss={dismissSurvivor} />
+      )}
+    </>
+  );
+}
+
+const EMBERS = [
+  { left: "47%", size: 3, delay: 0.0, dx: "-9px",  dur: 2.0 },
+  { left: "52%", size: 2, delay: 0.5, dx: "13px",  dur: 1.8 },
+  { left: "49%", size: 4, delay: 1.0, dx: "-6px",  dur: 2.3 },
+  { left: "51%", size: 2, delay: 1.4, dx: "9px",   dur: 1.6 },
+  { left: "45%", size: 3, delay: 0.3, dx: "-15px", dur: 2.5 },
+  { left: "54%", size: 2, delay: 1.7, dx: "7px",   dur: 1.9 },
+  { left: "48%", size: 3, delay: 0.8, dx: "-11px", dur: 2.1 },
+  { left: "50%", size: 2, delay: 1.2, dx: "16px",  dur: 1.7 },
+];
+
+function SurvivorOverlay({
+  fading,
+  textVisible,
+  onDismiss,
+}: {
+  fading: boolean;
+  textVisible: boolean;
+  onDismiss: () => void;
+}) {
+  return (
+    <>
+      <style>{`
+        @keyframes flicker1 {
+          0%,100% { transform: scaleX(1) scaleY(1) rotate(0deg); }
+          25%      { transform: scaleX(0.88) scaleY(1.06) rotate(-2deg); }
+          50%      { transform: scaleX(1.08) scaleY(0.94) rotate(1.5deg); }
+          75%      { transform: scaleX(0.92) scaleY(1.04) rotate(-1deg); }
+        }
+        @keyframes flicker2 {
+          0%,100% { transform: scaleX(1) scaleY(1) rotate(0deg); }
+          30%      { transform: scaleX(1.1) scaleY(0.9) rotate(2deg); }
+          60%      { transform: scaleX(0.9) scaleY(1.08) rotate(-2.5deg); }
+          80%      { transform: scaleX(1.05) scaleY(0.96) rotate(1deg); }
+        }
+        @keyframes flicker3 {
+          0%,100% { transform: scaleX(1) scaleY(1) rotate(0deg); }
+          20%      { transform: scaleX(0.85) scaleY(1.1) rotate(-3deg); }
+          55%      { transform: scaleX(1.12) scaleY(0.88) rotate(2deg); }
+          80%      { transform: scaleX(0.94) scaleY(1.06) rotate(-1.5deg); }
+        }
+        @keyframes flicker4 {
+          0%,100% { transform: scaleX(1) scaleY(1); }
+          40%      { transform: scaleX(0.8) scaleY(1.15); }
+          70%      { transform: scaleX(1.15) scaleY(0.85); }
+        }
+        @keyframes glow-pulse {
+          0%,100% { opacity: 0.55; transform: scale(1); }
+          50%      { opacity: 0.85; transform: scale(1.15); }
+        }
+        @keyframes ember-rise {
+          0%   { transform: translateY(0) translateX(0); opacity: 0.95; }
+          100% { transform: translateY(-72px) translateX(var(--dx)); opacity: 0; }
+        }
+        @keyframes tribe-fade {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      <div
+        onClick={onDismiss}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          background: "rgba(10,8,5,0.92)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: fading ? 0 : 1,
+          transition: "opacity 0.6s ease",
+          pointerEvents: fading ? "none" : "all",
+        }}
+      >
+        {/* Torch */}
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+
+          {/* Glow */}
+          <div style={{
+            position: "absolute",
+            top: -30,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 90,
+            height: 90,
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(255,140,0,0.45) 0%, transparent 70%)",
+            animation: "glow-pulse 1.6s ease-in-out infinite",
+          }} />
+
+          {/* Flames */}
+          <div style={{ position: "relative", width: 40, height: 60, marginBottom: -2 }}>
+            {/* Outer flame */}
+            <div style={{
+              position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
+              width: 38, height: 58,
+              background: "radial-gradient(ellipse at 50% 70%, #FF6B00, transparent 80%)",
+              borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%",
+              animation: "flicker1 0.35s ease-in-out infinite alternate",
+              transformOrigin: "center bottom",
+            }} />
+            {/* Mid flame */}
+            <div style={{
+              position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
+              width: 28, height: 48,
+              background: "radial-gradient(ellipse at 50% 65%, #FF9500, transparent 80%)",
+              borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%",
+              animation: "flicker2 0.28s ease-in-out infinite alternate",
+              transformOrigin: "center bottom",
+            }} />
+            {/* Inner flame */}
+            <div style={{
+              position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
+              width: 18, height: 36,
+              background: "radial-gradient(ellipse at 50% 60%, #FFCC00, transparent 80%)",
+              borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%",
+              animation: "flicker3 0.22s ease-in-out infinite alternate",
+              transformOrigin: "center bottom",
+            }} />
+            {/* White core */}
+            <div style={{
+              position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
+              width: 9, height: 20,
+              background: "radial-gradient(ellipse at 50% 55%, #FFF5CC, transparent 80%)",
+              borderRadius: "50% 50% 40% 40% / 60% 60% 40% 40%",
+              animation: "flicker4 0.18s ease-in-out infinite alternate",
+              transformOrigin: "center bottom",
+            }} />
+
+            {/* Embers */}
+            {EMBERS.map((e, i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  bottom: 20,
+                  left: e.left,
+                  width: e.size,
+                  height: e.size,
+                  borderRadius: "50%",
+                  background: i % 2 === 0 ? "#FF9500" : "#FFCC00",
+                  animation: `ember-rise ${e.dur}s ease-out ${e.delay}s infinite`,
+                  ["--dx" as string]: e.dx,
+                } as React.CSSProperties}
+              />
+            ))}
+          </div>
+
+          {/* Torch head */}
+          <div style={{
+            width: 28,
+            height: 18,
+            background: "linear-gradient(to bottom, #3D2000, #5D3A1A)",
+            borderRadius: "4px 4px 2px 2px",
+          }} />
+
+          {/* Torch handle */}
+          <div style={{
+            width: 11,
+            height: 80,
+            background: "linear-gradient(to bottom, #5D3A1A, #3D2000)",
+            borderRadius: 4,
+            marginTop: 1,
+          }} />
+        </div>
+
+        {/* Text */}
+        <p style={{
+          marginTop: 36,
+          fontFamily: "Georgia, serif",
+          fontSize: 22,
+          color: "#FFB347",
+          letterSpacing: "0.02em",
+          textShadow: "0 0 20px rgba(255,140,0,0.6), 0 2px 8px rgba(0,0,0,0.8)",
+          opacity: textVisible ? 1 : 0,
+          animation: textVisible ? "tribe-fade 0.7s ease forwards" : "none",
+        }}>
+          The tribe has spoken.
+        </p>
+      </div>
     </>
   );
 }
