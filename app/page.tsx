@@ -16,7 +16,7 @@ import type { TMDBTitle } from "@/lib/types";
 type Tab = "friends" | "recommendations";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead, userId } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead, deleteMessage, userId } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [tab, setTab] = useState<Tab>("recommendations");
   const [loading, setLoading] = useState(true);
@@ -151,7 +151,7 @@ export default function InboxPage() {
                   return (
                     <div
                       key={msg.id}
-                      className="p-3 rounded-2xl"
+                      className="relative p-3 rounded-2xl"
                       style={{
                         background: isSent ? "#fff8f8" : "#ffffff",
                         border: isSent ? "1px solid rgba(255,87,87,0.2)" : "1px solid #eeeeee",
@@ -159,6 +159,15 @@ export default function InboxPage() {
                         opacity: isSent ? 0.85 : (msg.readAt ? 0.6 : 1),
                       }}
                     >
+                      <button
+                        onClick={() => deleteMessage(msg.id)}
+                        className="absolute top-3 right-3 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90"
+                        style={{ background: "#f0f0f0", border: "1px solid #e0e0e0" }}
+                      >
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M1 1L7 7M7 1L1 7" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </button>
                       <div className="flex items-center gap-2 mb-2">
                         {isSent ? (
                           <>

@@ -74,6 +74,7 @@ interface AppState {
   unreadMessageCount: number;
   sendMessage: (receiverId: string, content: string, showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }) => Promise<{ error: string | null }>;
   markMessagesRead: () => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
   refreshMessages: () => Promise<void>;
   refreshRecommendations: () => Promise<void>;
   refreshWatchlist: () => Promise<void>;
@@ -349,6 +350,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prev.map((m) => unreadIds.includes(m.id) ? { ...m, readAt: new Date().toISOString() } : m)
     );
   }, [userId, supabase, messages]);
+
+  const deleteMessage = useCallback(async (messageId: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    await supabase.from("messages").delete().eq("id", messageId);
+  }, [supabase]);
 
   const acceptFriendRequest = useCallback(
     async (id: string, senderId: string) => {
@@ -764,6 +770,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         unreadMessageCount,
         sendMessage,
         markMessagesRead,
+        deleteMessage,
         refreshMessages,
         refreshRecommendations,
         refreshWatchlist,
