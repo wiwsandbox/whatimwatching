@@ -298,23 +298,20 @@ export default function ProfilePage() {
             className="p-4 rounded-2xl"
             style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)" }}
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" style={{ gap: 8 }}>
               {STREAMING_SERVICES.map((service) => {
                 const active = activeServices.has(service);
                 return (
                   <button
                     key={service}
                     onClick={() => toggleService(service)}
-                    className="flex items-center gap-1.5 text-xs font-medium transition-all active:scale-95"
+                    className="transition-all active:scale-95"
                     style={
                       active
-                        ? { background: "#FFF0EE", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 20, padding: "5px 10px" }
-                        : { background: "transparent", color: "var(--text-muted)", border: "0.5px solid var(--border)", borderRadius: 20, padding: "5px 10px" }
+                        ? { background: "#FFF0EE", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 500 }
+                        : { background: "transparent", color: "#DDD0CB", border: "1px dashed #E8DDD8", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 400 }
                     }
                   >
-                    {active && (
-                      <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#C44030" }} />
-                    )}
                     {service}
                   </button>
                 );
@@ -332,23 +329,20 @@ export default function ProfilePage() {
             className="p-4 rounded-2xl"
             style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)" }}
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap" style={{ gap: 8 }}>
               {GENRES.map((genre) => {
                 const active = activeGenres.has(genre);
                 return (
                   <button
                     key={genre}
                     onClick={() => toggleGenre(genre)}
-                    className="flex items-center gap-1.5 text-xs font-medium transition-all active:scale-95"
+                    className="transition-all active:scale-95"
                     style={
                       active
-                        ? { background: "#FFF0EE", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 20, padding: "5px 10px" }
-                        : { background: "transparent", color: "var(--text-muted)", border: "0.5px solid var(--border)", borderRadius: 20, padding: "5px 10px" }
+                        ? { background: "#FFF0EE", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 500 }
+                        : { background: "transparent", color: "#DDD0CB", border: "1px dashed #E8DDD8", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 400 }
                     }
                   >
-                    {active && (
-                      <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#C44030" }} />
-                    )}
                     {genre}
                   </button>
                 );
