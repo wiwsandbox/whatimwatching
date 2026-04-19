@@ -72,6 +72,8 @@ interface AppState {
   userId: string | null;
   messages: Message[];
   unreadMessageCount: number;
+  unreadRecsCount: number;
+  friendsTabCount: number;
   sendMessage: (receiverId: string, content: string, showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }) => Promise<{ error: string | null }>;
   markMessagesRead: () => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
@@ -208,15 +210,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     messages.filter((m) => !m.readAt && m.receiverId === userId).length
   , [messages, userId]);
 
-  const inboxUnreadCount = useMemo(() => {
-    const newRecs = recommendations.filter(
-      (r) => !r.watched && r.createdAt > lastInboxSeenAt
-    ).length;
-    const newRequests = friendRequests.filter(
-      (r) => r.createdAt > lastInboxSeenAt
-    ).length;
-    return newRecs + newRequests + unreadMessageCount;
-  }, [recommendations, friendRequests, lastInboxSeenAt, unreadMessageCount]);
+  const unreadRecsCount = useMemo(() =>
+    recommendations.filter((r) => !r.watched).length
+  , [recommendations]);
+
+  const friendsTabCount = useMemo(() =>
+    unreadMessageCount + friendRequests.length
+  , [unreadMessageCount, friendRequests]);
+
+  const inboxUnreadCount = useMemo(() =>
+    unreadRecsCount + friendsTabCount
+  , [unreadRecsCount, friendsTabCount]);
 
   const refreshMessages = useCallback(async () => {
     if (!userId) { setMessages([]); return; }
@@ -768,6 +772,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         userId,
         messages,
         unreadMessageCount,
+        unreadRecsCount,
+        friendsTabCount,
         sendMessage,
         markMessagesRead,
         deleteMessage,

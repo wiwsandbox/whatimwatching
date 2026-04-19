@@ -16,7 +16,7 @@ import type { TMDBTitle } from "@/lib/types";
 type Tab = "friends" | "recommendations";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead, deleteMessage, userId } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead, deleteMessage, userId, unreadRecsCount, friendsTabCount } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [tab, setTab] = useState<Tab>("recommendations");
   const [loading, setLoading] = useState(true);
@@ -93,20 +93,32 @@ export default function InboxPage() {
 
           {/* Tabs */}
           <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}>
-            {(["recommendations", "friends"] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className="flex-1 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-200"
-                style={
-                  tab === t
-                    ? { background: "#ff5757", color: "white" }
-                    : { background: "transparent", color: "#999999" }
-                }
-              >
-                {t === "recommendations" ? "Recommendations" : "Friends"}
-              </button>
-            ))}
+            {(["recommendations", "friends"] as Tab[]).map((t) => {
+              const count = t === "recommendations" ? unreadRecsCount : friendsTabCount;
+              const isActive = tab === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5"
+                  style={isActive ? { background: "#ff5757", color: "white" } : { background: "transparent", color: "#999999" }}
+                >
+                  {t === "recommendations" ? "Recommendations" : "Friends"}
+                  {count > 0 && (
+                    <span
+                      className="min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold px-[3px]"
+                      style={{
+                        background: isActive ? "rgba(255,255,255,0.35)" : "#ff5757",
+                        color: "white",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {count > 99 ? "99+" : count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </header>
