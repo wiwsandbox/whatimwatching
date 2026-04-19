@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const [sentCount, setSentCount] = useState(0);
 
   const [bioSheetOpen, setBioSheetOpen] = useState(false);
+  const [installSheetOpen, setInstallSheetOpen] = useState(false);
   const [bioInput, setBioInput] = useState("");
   const [bioSaving, setBioSaving] = useState(false);
 
@@ -360,6 +361,24 @@ export default function ProfilePage() {
             className="rounded-2xl overflow-hidden"
             style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)" }}
           >
+            <button
+              onClick={() => setInstallSheetOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3.5 text-sm transition-opacity active:opacity-60"
+              style={{ color: "var(--text-secondary)", borderBottom: "0.5px solid var(--border)" }}
+            >
+              <div className="flex items-center gap-3">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M8 5V10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <path d="M5.5 7.5L8 10L10.5 7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 13H11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <span>Add to Home Screen</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4L10 8L6 12" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
             {[
               { label: "Notifications", icon: "🔔" },
               { label: "Privacy", icon: "🔒" },
@@ -438,6 +457,11 @@ export default function ProfilePage() {
             </button>
           </div>
         </>
+      )}
+
+      {/* Install sheet */}
+      {installSheetOpen && (
+        <InstallSheet onClose={() => setInstallSheetOpen(false)} />
       )}
 
       {/* Manage friends sheet */}
@@ -538,6 +562,70 @@ function ManageFriendsSheet({
             })
           )}
         </div>
+      </div>
+    </>
+  );
+}
+
+function InstallSheet({ onClose }: { onClose: () => void }) {
+  const isIOS =
+    typeof navigator !== "undefined" &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  const steps = isIOS
+    ? [
+        "Tap the Share button at the bottom of your Safari browser",
+        'Scroll down and tap "Add to Home Screen"',
+        'Tap "Add" in the top right corner',
+        "wiw will appear on your home screen like any other app",
+      ]
+    : [
+        "Tap the three-dot menu in the top right of Chrome",
+        'Tap "Add to Home Screen"',
+        'Tap "Add" to confirm',
+        "wiw will appear on your home screen like any other app",
+      ];
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-[80]"
+        style={{ background: "rgba(0,0,0,0.4)" }}
+        onClick={onClose}
+      />
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-[90] rounded-t-3xl p-6"
+        style={{ background: "var(--surface)", boxShadow: "0 -4px 32px rgba(0,0,0,0.12)" }}
+      >
+        <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: "var(--border)" }} />
+        <h3 className="font-semibold text-base mb-1" style={{ color: "var(--text-primary)" }}>
+          Add wiw to your home screen
+        </h3>
+        <p className="text-xs mb-5 leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+          Access wiw instantly from your home screen — no app store needed.
+        </p>
+        <div className="space-y-3 mb-6">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div
+                className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
+                style={{ background: "#FFF0EE", color: "#C44030", border: "0.5px solid #FACCBC" }}
+              >
+                {i + 1}
+              </div>
+              <p className="text-sm leading-snug pt-0.5" style={{ color: "var(--text-primary)" }}>
+                {step}
+              </p>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={onClose}
+          className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98]"
+          style={{ background: "var(--brand)", color: "white" }}
+        >
+          Got it
+        </button>
       </div>
     </>
   );
