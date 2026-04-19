@@ -16,7 +16,7 @@ import type { TMDBTitle } from "@/lib/types";
 type Tab = "friends" | "recommendations";
 
 export default function InboxPage() {
-  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead } = useApp();
+  const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead, userId } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [tab, setTab] = useState<Tab>("recommendations");
   const [loading, setLoading] = useState(true);
@@ -142,7 +142,9 @@ export default function InboxPage() {
                   Messages
                 </p>
                 {messages.map((msg) => {
+                  const isSent = msg.senderId === userId;
                   const senderName = msg.sender?.display_name || msg.sender?.username || "Someone";
+                  const recipientName = msg.receiver?.display_name || msg.receiver?.username || "Someone";
                   const avatarColor = msg.sender?.avatar_url?.startsWith("color:")
                     ? msg.sender.avatar_url.slice(6)
                     : "#ff5757";
@@ -151,22 +153,32 @@ export default function InboxPage() {
                       key={msg.id}
                       className="p-3 rounded-2xl"
                       style={{
-                        background: "#ffffff",
-                        border: "1px solid #eeeeee",
+                        background: isSent ? "#fff8f8" : "#ffffff",
+                        border: isSent ? "1px solid rgba(255,87,87,0.2)" : "1px solid #eeeeee",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                        opacity: msg.readAt ? 0.6 : 1,
+                        opacity: isSent ? 0.85 : (msg.readAt ? 0.6 : 1),
                       }}
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                          style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
-                        >
-                          {senderName.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{senderName}</span>
-                        {!msg.readAt && (
-                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#ff5757" }} />
+                        {isSent ? (
+                          <>
+                            <span className="text-xs font-semibold" style={{ color: "#ff5757" }}>You</span>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0"><path d="M2 6H10M7 3L10 6L7 9" stroke="#ffaaaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{recipientName}</span>
+                          </>
+                        ) : (
+                          <>
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                              style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                            >
+                              {senderName.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{senderName}</span>
+                            {!msg.readAt && (
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#ff5757" }} />
+                            )}
+                          </>
                         )}
                         <span className="text-[10px] ml-auto" style={{ color: "#999999" }}>
                           {formatRelativeTime(msg.createdAt)}

@@ -31,6 +31,12 @@ interface Message {
     display_name: string | null
     avatar_url: string | null
   } | null
+  receiver?: {
+    id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+  } | null
 }
 
 interface AppState {
@@ -63,6 +69,7 @@ interface AppState {
   addRecToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   markWatchedFromRec: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   dismissRecommendation: (recId: string) => Promise<void>;
+  userId: string | null;
   messages: Message[];
   unreadMessageCount: number;
   sendMessage: (receiverId: string, content: string, showContext?: { tmdbId: number; mediaType: string; showTitle: string; showPosterPath: string | null }) => Promise<{ error: string | null }>;
@@ -197,8 +204,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const unreadMessageCount = useMemo(() =>
-    messages.filter((m) => !m.readAt).length
-  , [messages]);
+    messages.filter((m) => !m.readAt && m.receiverId === userId).length
+  , [messages, userId]);
 
   const inboxUnreadCount = useMemo(() => {
     const newRecs = recommendations.filter(
@@ -214,8 +221,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!userId) { setMessages([]); return; }
     const { data } = await supabase
       .from("messages")
-      .select("id, sender_id, receiver_id, content, tmdb_id, media_type, show_title, show_poster_path, read_at, created_at, sender:sender_id(id, username, display_name, avatar_url)")
-      .eq("receiver_id", userId)
+      .select("id, sender_id, receiver_id, content, tmdb_id, media_type, show_title, show_poster_path, read_at, created_at, sender:sender_id(id, username, display_name, avatar_url), receiver:receiver_id(id, username, display_name, avatar_url)")
+      .or(`receiver_id.eq.${userId},sender_id.eq.${userId}`)
       .order("created_at", { ascending: false });
 
     if (data) {
@@ -231,6 +238,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         readAt: m.read_at,
         createdAt: m.created_at,
         sender: Array.isArray(m.sender) ? m.sender[0] : m.sender,
+        receiver: Array.isArray(m.receiver) ? m.receiver[0] : m.receiver,
       })));
     }
   }, [userId, supabase]);
@@ -751,6 +759,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addRecToWatchlist,
         markWatchedFromRec,
         dismissRecommendation,
+        userId,
         messages,
         unreadMessageCount,
         sendMessage,
