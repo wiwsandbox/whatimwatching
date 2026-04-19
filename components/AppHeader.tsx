@@ -6,7 +6,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ right }: AppHeaderProps) {
   return (
-    <div className="relative flex items-center justify-center px-4 pt-12 pb-1">
+    <div className="relative flex items-center justify-center px-4 pt-12 pb-4">
       <span
         style={{
           fontFamily: "var(--font-playfair)",
