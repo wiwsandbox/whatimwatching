@@ -52,7 +52,6 @@ export default function ProfilePage() {
 
   const displayName = profile?.display_name || profile?.username || user?.email?.split("@")[0] || "?";
   const username = profile?.username || user?.email?.split("@")[0] || "";
-  const isImageAvatar = profile?.avatar_url && !profile.avatar_url.startsWith("color:");
   const avatarColor = profile?.avatar_url?.startsWith("color:")
     ? profile.avatar_url.slice(6)
     : "var(--brand)";
@@ -187,32 +186,13 @@ export default function ProfilePage() {
         >
           {/* Avatar + name */}
           <div className="p-4 flex items-start gap-4">
-            <div className="relative flex-shrink-0">
-              {isImageAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile!.avatar_url!}
-                  alt={displayName}
-                  style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }}
-                />
-              ) : (
-                <div
-                  className="rounded-full flex items-center justify-center text-2xl font-bold"
-                  style={{ width: 56, height: 56, background: avatarColor, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-                >
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <button
-                onClick={() => console.log("edit photo tapped")}
-                className="absolute bottom-0 right-0 flex items-center justify-center rounded-full"
-                style={{ width: 18, height: 18, background: "rgba(0,0,0,0.6)" }}
+            <div className="flex-shrink-0">
+              <div
+                className="rounded-full flex items-center justify-center text-2xl font-bold"
+                style={{ width: 56, height: 56, background: avatarColor, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
               >
-                <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-                  <path d="M1.5 8L6.5 2.5L7.5 3.5L2.5 9H1.5V8Z" fill="white" />
-                  <path d="M6 2L8 4" stroke="white" strokeWidth="1" strokeLinecap="round" />
-                </svg>
-              </button>
+                {displayName.charAt(0).toUpperCase()}
+              </div>
             </div>
 
             <div className="flex-1 min-w-0">
@@ -254,6 +234,58 @@ export default function ProfilePage() {
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* ── Friends ── */}
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-2 px-1" style={{ color: "var(--text-secondary)" }}>
+            Friends{friendsCount > 0 ? ` · ${friendsCount}` : ""}
+          </p>
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)" }}
+          >
+            <button
+              onClick={() => setManageFriendsOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 transition-opacity active:opacity-70"
+              style={{ borderBottom: "0.5px solid var(--border)" }}
+            >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--surface-2)" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6" cy="5" r="2.5" stroke="var(--brand)" strokeWidth="1.3" />
+                  <path d="M1 13C1 10.8 3.2 9 6 9" stroke="var(--brand)" strokeWidth="1.3" strokeLinecap="round" />
+                  <circle cx="12" cy="7" r="2" stroke="var(--brand)" strokeWidth="1.3" />
+                  <path d="M9.5 13C9.5 11.6 10.6 10.5 12 10.5C13.4 10.5 14.5 11.6 14.5 13" stroke="var(--brand)" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Manage friends</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>View, add or remove connections</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                <path d="M5 3L9 7L5 11" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              onClick={handleInvite}
+              className="w-full flex items-center gap-3 px-4 py-3.5 transition-opacity active:opacity-70"
+            >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--surface-2)" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1V10" stroke="var(--brand)" strokeWidth="1.4" strokeLinecap="round" />
+                  <path d="M5 4L8 1L11 4" stroke="var(--brand)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 10V14H13V10" stroke="var(--brand)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Invite someone</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Share wiw via SMS</p>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+                <path d="M5 3L9 7L5 11" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -322,58 +354,6 @@ export default function ProfilePage() {
                 );
               })}
             </div>
-          </div>
-        </div>
-
-        {/* ── Friends ── */}
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-2 px-1" style={{ color: "var(--text-secondary)" }}>
-            Friends{friendsCount > 0 ? ` · ${friendsCount}` : ""}
-          </p>
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)" }}
-          >
-            <button
-              onClick={() => setManageFriendsOpen(true)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 transition-opacity active:opacity-70"
-              style={{ borderBottom: "0.5px solid var(--border)" }}
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--surface-2)" }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="6" cy="5" r="2.5" stroke="var(--brand)" strokeWidth="1.3" />
-                  <path d="M1 13C1 10.8 3.2 9 6 9" stroke="var(--brand)" strokeWidth="1.3" strokeLinecap="round" />
-                  <circle cx="12" cy="7" r="2" stroke="var(--brand)" strokeWidth="1.3" />
-                  <path d="M9.5 13C9.5 11.6 10.6 10.5 12 10.5C13.4 10.5 14.5 11.6 14.5 13" stroke="var(--brand)" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Manage friends</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>View, add or remove connections</p>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-                <path d="M5 3L9 7L5 11" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button
-              onClick={handleInvite}
-              className="w-full flex items-center gap-3 px-4 py-3.5 transition-opacity active:opacity-70"
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--surface-2)" }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 1V10" stroke="var(--brand)" strokeWidth="1.4" strokeLinecap="round" />
-                  <path d="M5 4L8 1L11 4" stroke="var(--brand)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 10V14H13V10" stroke="var(--brand)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Invite someone</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Share wiw via SMS</p>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-                <path d="M5 3L9 7L5 11" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
           </div>
         </div>
 
