@@ -19,6 +19,7 @@ export default function InboxPage() {
   const { recommendations, markWatched, markUnwatched, addRecToWatchlist, markWatchedFromRec, dismissRecommendation, friendRequests, acceptFriendRequest, declineFriendRequest, markInboxSeen, messages, markMessagesRead, deleteMessage, userId, unreadRecsCount, friendsTabCount } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [tab, setTab] = useState<Tab>("recommendations");
+  const [tabVisible, setTabVisible] = useState(true);
   const [loading, setLoading] = useState(true);
   const [composeOpen, setComposeOpen] = useState(false);
 
@@ -40,6 +41,15 @@ export default function InboxPage() {
   useEffect(() => {
     if (tab === "friends") markMessagesRead();
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleTabChange = useCallback((t: Tab) => {
+    if (t === tab) return;
+    setTabVisible(false);
+    setTimeout(() => {
+      setTab(t);
+      setTabVisible(true);
+    }, 100);
+  }, [tab]);
 
   const fetchTitles = useCallback(async () => {
     const toFetch = recommendations.filter(
@@ -80,35 +90,46 @@ export default function InboxPage() {
   const unwatchedCount = recommendations.filter((r) => !r.watched).length;
 
   return (
-    <div className="flex flex-col min-h-screen pb-24" style={{ background: "#ffffff" }}>
-      <header className="sticky top-0 z-40" style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+    <div className="flex flex-col min-h-screen pb-24" style={{ background: "var(--bg)" }}>
+      <header className="sticky top-0 z-40" style={{ background: "rgba(255,250,248,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
         <AppHeader />
 
         <div className="px-4 pb-3">
           {tab === "recommendations" && unwatchedCount > 0 && (
-            <p className="text-xs mb-3" style={{ color: "#999999" }}>
+            <p className="text-[11px] mb-3 uppercase tracking-[0.06em] font-semibold" style={{ color: "var(--text-secondary)" }}>
               {unwatchedCount} unseen recommendation{unwatchedCount !== 1 ? "s" : ""}
             </p>
           )}
 
-          {/* Tabs */}
-          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}>
+          {/* Tabs with sliding indicator */}
+          <div className="relative flex p-[3px] rounded-[24px]" style={{ background: "var(--surface-2)" }}>
+            {/* Sliding pill */}
+            <div
+              className="absolute inset-y-[3px] rounded-[20px] pointer-events-none"
+              style={{
+                background: "var(--brand)",
+                width: "calc(50% - 3px)",
+                left: 3,
+                transform: tab === "recommendations" ? "translateX(0)" : "translateX(100%)",
+                transition: "transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
+            />
             {(["recommendations", "friends"] as Tab[]).map((t) => {
               const count = t === "recommendations" ? unreadRecsCount : friendsTabCount;
               const isActive = tab === t;
               return (
                 <button
                   key={t}
-                  onClick={() => setTab(t)}
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5"
-                  style={isActive ? { background: "#ff5757", color: "white" } : { background: "transparent", color: "#999999" }}
+                  onClick={() => handleTabChange(t)}
+                  className="relative z-10 flex-1 py-2 text-xs font-[500] flex items-center justify-center gap-1.5 transition-colors duration-200"
+                  style={{ color: isActive ? "white" : "var(--text-secondary)" }}
                 >
                   {t === "recommendations" ? "Recommendations" : "Friends"}
                   {count > 0 && (
                     <span
                       className="min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[9px] font-bold px-[3px]"
                       style={{
-                        background: isActive ? "rgba(255,255,255,0.35)" : "#ff5757",
+                        background: isActive ? "rgba(255,255,255,0.35)" : "var(--brand)",
                         color: "white",
                         lineHeight: 1,
                       }}
@@ -123,34 +144,43 @@ export default function InboxPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pt-2">
+      {/* Tab content with fade transition */}
+      <main
+        className="flex-1 px-4 pt-2"
+        style={{ transition: "opacity 200ms ease", opacity: tabVisible ? 1 : 0 }}
+      >
         {tab === "friends" ? (
           <div>
             {/* New Message button */}
             <button
               onClick={() => setComposeOpen(true)}
-              className="w-full flex items-center gap-3 p-4 rounded-2xl mb-4 transition-all active:scale-[0.98]"
-              style={{ background: "#fff0f0", border: "1px solid rgba(255,87,87,0.15)" }}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl mb-4 transition-all active:scale-[0.97]"
+              style={{
+                background: "var(--surface)",
+                border: "0.5px solid var(--border)",
+                boxShadow: "0 2px 12px rgba(180, 100, 80, 0.06)",
+                transition: "transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
             >
-              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#ff5757" }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--brand)" }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M2 2H14C14.6 2 15 2.4 15 3V10C15 10.6 14.6 11 14 11H5L2 14V3C2 2.4 2.4 2 2 2Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M8 5V8M6.5 6.5H9.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
                 </svg>
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold" style={{ color: "#ff5757" }}>New Message</p>
-                <p className="text-xs" style={{ color: "#999999" }}>Send a message to a friend</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--brand)" }}>New Message</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>Send a message to a friend</p>
               </div>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="ml-auto flex-shrink-0">
-                <path d="M5 3L9 7L5 11" stroke="#ffaaaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 3L9 7L5 11" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
 
             {/* Messages */}
             {messages.length > 0 && (
               <div className="space-y-2 mb-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--text-secondary)" }}>
                   Messages
                 </p>
                 {messages.map((msg) => {
@@ -159,56 +189,57 @@ export default function InboxPage() {
                   const recipientName = msg.receiver?.display_name || msg.receiver?.username || "Someone";
                   const avatarColor = msg.sender?.avatar_url?.startsWith("color:")
                     ? msg.sender.avatar_url.slice(6)
-                    : "#ff5757";
+                    : "var(--brand)";
                   return (
                     <div
                       key={msg.id}
-                      className="relative p-3 rounded-2xl"
+                      className="relative p-3 rounded-2xl active:scale-[0.97]"
                       style={{
-                        background: isSent ? "#fff8f8" : "#ffffff",
-                        border: isSent ? "1px solid rgba(255,87,87,0.2)" : "1px solid #eeeeee",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                        background: isSent ? "var(--surface-2)" : "var(--surface)",
+                        border: "0.5px solid var(--border)",
+                        boxShadow: "0 2px 12px rgba(180, 100, 80, 0.06)",
                         opacity: isSent ? 0.85 : (msg.readAt ? 0.6 : 1),
+                        transition: "transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)",
                       }}
                     >
                       <button
                         onClick={() => deleteMessage(msg.id)}
                         className="absolute top-3 right-3 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90"
-                        style={{ background: "#f0f0f0", border: "1px solid #e0e0e0" }}
+                        style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)" }}
                       >
                         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                          <path d="M1 1L7 7M7 1L1 7" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" />
+                          <path d="M1 1L7 7M7 1L1 7" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                       </button>
                       <div className="flex items-center gap-2 mb-2">
                         {isSent ? (
                           <>
-                            <span className="text-xs font-semibold" style={{ color: "#ff5757" }}>You</span>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0"><path d="M2 6H10M7 3L10 6L7 9" stroke="#ffaaaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{recipientName}</span>
+                            <span className="text-xs font-semibold" style={{ color: "var(--brand)" }}>You</span>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="flex-shrink-0"><path d="M2 6H10M7 3L10 6L7 9" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{recipientName}</span>
                           </>
                         ) : (
                           <>
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
+                              style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
                             >
                               {senderName.charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-xs font-semibold" style={{ color: "#1a1a1a" }}>{senderName}</span>
+                            <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{senderName}</span>
                             {!msg.readAt && (
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#ff5757" }} />
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--brand)" }} />
                             )}
                           </>
                         )}
-                        <span className="text-[10px] ml-auto" style={{ color: "#999999" }}>
+                        <span className="text-[10px] ml-auto" style={{ color: "var(--text-muted)" }}>
                           {formatRelativeTime(msg.createdAt)}
                         </span>
                       </div>
                       {msg.showTitle && (
                         <div
                           className="flex items-center gap-2 px-2 py-1.5 rounded-lg mb-2"
-                          style={{ background: "#f7f7f7" }}
+                          style={{ background: "var(--surface-2)" }}
                         >
                           {msg.showPosterPath && (
                             <Image
@@ -216,18 +247,19 @@ export default function InboxPage() {
                               alt={msg.showTitle ?? ""}
                               width={28}
                               height={42}
-                              className="rounded object-cover flex-shrink-0"
+                              className="object-cover flex-shrink-0"
+                              style={{ borderRadius: 6 }}
                             />
                           )}
                           <div>
-                            <p className="text-xs font-semibold line-clamp-1" style={{ color: "#1a1a1a" }}>{msg.showTitle}</p>
-                            <p className="text-[10px] uppercase tracking-wide" style={{ color: "#999999" }}>
+                            <p className="text-xs font-semibold line-clamp-1" style={{ color: "var(--text-primary)" }}>{msg.showTitle}</p>
+                            <p className="text-[11px] font-medium" style={{ background: "transparent", color: "var(--brand)", letterSpacing: "0.01em" }}>
                               {msg.mediaType === "tv" ? "Series" : "Film"}
                             </p>
                           </div>
                         </div>
                       )}
-                      <p className="text-sm leading-snug" style={{ color: "#1a1a1a" }}>{msg.content}</p>
+                      <p className="text-sm leading-snug" style={{ color: "var(--text-primary)" }}>{msg.content}</p>
                     </div>
                   );
                 })}
@@ -237,7 +269,7 @@ export default function InboxPage() {
             {/* Friend requests */}
             {friendRequests.length > 0 && (
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--text-secondary)" }}>
                   Friend requests
                 </p>
                 {friendRequests.map((req) => {
@@ -246,32 +278,32 @@ export default function InboxPage() {
                     <div
                       key={req.id}
                       className="flex items-center gap-3 p-3 rounded-2xl"
-                      style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                      style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180, 100, 80, 0.06)" }}
                     >
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                        style={{ background: "#ff5757", color: "white", fontFamily: "var(--font-playfair)" }}
+                        style={{ background: "var(--brand)", color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
                       >
                         {name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
+                        <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{name}</p>
                         {req.sender.username && (
-                          <p className="text-xs" style={{ color: "#999999" }}>@{req.sender.username}</p>
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>@{req.sender.username}</p>
                         )}
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <button
                           onClick={() => declineFriendRequest(req.id)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }}
+                          className="px-3 py-1.5 text-xs font-semibold transition-all active:scale-95"
+                          style={{ background: "#FFF1EF", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 14 }}
                         >
                           Decline
                         </button>
                         <button
                           onClick={() => acceptFriendRequest(req.id, req.sender.id)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                          style={{ background: "#ff5757", color: "white" }}
+                          className="px-3 py-1.5 text-xs font-semibold transition-all active:scale-95"
+                          style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
                         >
                           Accept
                         </button>
@@ -285,16 +317,16 @@ export default function InboxPage() {
             {/* Empty state */}
             {friendRequests.length === 0 && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "#f7f7f7" }}>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="9" cy="7" r="4" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="9" cy="7" r="4" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold" style={{ color: "#cccccc" }}>No friend activity</p>
-                <p className="text-xs mt-1" style={{ color: "#dddddd" }}>Friend requests and messages will appear here</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>No friend activity</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Friend requests and messages will appear here</p>
               </div>
             )}
           </div>
@@ -305,26 +337,26 @@ export default function InboxPage() {
                 <div
                   key={i}
                   className="h-[140px] rounded-2xl animate-pulse"
-                  style={{ background: "#f7f7f7" }}
+                  style={{ background: "var(--surface-2)" }}
                 />
               ))
             ) : enrichedRecs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                  style={{ background: "#f7f7f7" }}
+                  style={{ background: "var(--surface-2)" }}
                 >
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4Z"
-                      stroke="#cccccc"
+                      stroke="var(--text-muted)"
                       strokeWidth="2"
                     />
-                    <path d="M22 6L12 13L2 6" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M22 6L12 13L2 6" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold" style={{ color: "#cccccc" }}>All caught up!</p>
-                <p className="text-xs mt-1" style={{ color: "#dddddd" }}>No recommendations waiting for you</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>All caught up!</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>No recommendations waiting for you</p>
               </div>
             ) : (
               enrichedRecs.map((rec) => (

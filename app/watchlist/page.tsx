@@ -25,13 +25,13 @@ const STATUS_COLORS: Record<WatchlistStatus, { bg: string; color: string }> = {
 };
 
 function isUpcoming(title: TMDBTitle | undefined): boolean {
-  if (!title) return false
-  const dateStr = title.release_date || title.first_air_date
-  if (!dateStr) return false
-  const releaseDate = new Date(dateStr)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return releaseDate > today
+  if (!title) return false;
+  const dateStr = title.release_date || title.first_air_date;
+  if (!dateStr) return false;
+  const releaseDate = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return releaseDate > today;
 }
 
 const NEXT_STATUS: Record<WatchlistStatus, WatchlistStatus> = {
@@ -40,11 +40,14 @@ const NEXT_STATUS: Record<WatchlistStatus, WatchlistStatus> = {
   watched: "to_watch",
 };
 
+const TAB_INDEX: Record<Filter, number> = { to_watch: 0, watching: 1, watched: 2 };
+
 export default function WatchlistPage() {
   const { watchlist, removeFromWatchlist, setWatchlistStatus } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("to_watch");
+  const [filterVisible, setFilterVisible] = useState(true);
 
   const fetchTitles = useCallback(async () => {
     const toFetch = watchlist.filter((w) => !titleCache[`${w.mediaType}-${w.tmdbId}`]);
@@ -65,6 +68,15 @@ export default function WatchlistPage() {
 
   useEffect(() => { fetchTitles(); }, [fetchTitles]);
 
+  const handleFilterChange = useCallback((f: Filter) => {
+    if (f === filter) return;
+    setFilterVisible(false);
+    setTimeout(() => {
+      setFilter(f);
+      setFilterVisible(true);
+    }, 100);
+  }, [filter]);
+
   const enriched = watchlist.map((w) => ({
     ...w,
     title: titleCache[`${w.mediaType}-${w.tmdbId}`],
@@ -83,71 +95,85 @@ export default function WatchlistPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen pb-24" style={{ background: "#ffffff" }}>
+    <div className="flex flex-col min-h-screen pb-24" style={{ background: "var(--bg)" }}>
       <header
         className="sticky top-0 z-40"
-        style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        style={{ background: "rgba(255,250,248,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
       >
         <AppHeader />
         <div className="px-4 pb-3">
-          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}>
-            {filterTabs.map(({ key, label, count }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className="flex-1 py-2 rounded-lg text-[11px] font-semibold transition-all duration-200 flex items-center justify-center gap-1"
-                style={
-                  filter === key
-                    ? { background: "#ff5757", color: "white" }
-                    : { background: "transparent", color: "#999999" }
-                }
-              >
-                {label}
-                {count !== undefined && count > 0 && (
-                  <span
-                    className="text-[9px] px-1 py-0.5 rounded-full leading-none"
-                    style={{
-                      background: filter === key ? "rgba(255,255,255,0.3)" : "#eeeeee",
-                      color: filter === key ? "white" : "#999999",
-                    }}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            ))}
+          {/* Tabs with sliding indicator */}
+          <div className="relative flex p-[3px] rounded-[24px]" style={{ background: "var(--surface-2)" }}>
+            {/* Sliding pill */}
+            <div
+              className="absolute inset-y-[3px] rounded-[20px] pointer-events-none"
+              style={{
+                background: "var(--brand)",
+                width: "calc(33.33% - 2px)",
+                left: 3,
+                transform: `translateX(calc(${TAB_INDEX[filter]} * 100%))`,
+                transition: "transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+              }}
+            />
+            {filterTabs.map(({ key, label, count }) => {
+              const isActive = filter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleFilterChange(key)}
+                  className="relative z-10 flex-1 py-2 text-[11px] font-[500] transition-colors duration-200 flex items-center justify-center gap-1"
+                  style={{ color: isActive ? "white" : "var(--text-secondary)" }}
+                >
+                  {label}
+                  {count !== undefined && count > 0 && (
+                    <span
+                      className="text-[9px] px-1 py-0.5 rounded-full leading-none"
+                      style={{
+                        background: isActive ? "rgba(255,255,255,0.3)" : "var(--brand)",
+                        color: "white",
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 px-4 pt-1">
+      <main
+        className="flex-1 px-4 pt-1"
+        style={{ transition: "opacity 200ms ease", opacity: filterVisible ? 1 : 0 }}
+      >
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "#f7f7f7" }} />
+              <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "var(--surface-2)" }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "#f7f7f7" }}>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M19 21L12 16L5 21V5C5 3.9 5.9 3 7 3H17C18.1 3 19 3.9 19 5V21Z"
-                  stroke="#cccccc" strokeWidth="2" strokeLinecap="round"
+                  stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"
                 />
               </svg>
             </div>
-            <p className="text-sm font-semibold" style={{ color: "#cccccc" }}>
+            <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
               {filter === "watched" ? "Nothing watched yet" : "Nothing here yet"}
             </p>
-            <p className="text-xs mt-1" style={{ color: "#dddddd" }}>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               Search for titles to add them here
             </p>
             {filter === "to_watch" && (
               <Link
                 href="/search"
-                className="mt-4 px-5 py-2.5 rounded-full text-sm font-semibold"
-                style={{ background: "#ff5757", color: "white" }}
+                className="mt-4 px-5 py-2.5 text-sm font-semibold"
+                style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
               >
                 Find something to watch
               </Link>
@@ -188,45 +214,42 @@ function WatchlistRow({
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-2xl"
+      className="flex items-center gap-3 p-3 rounded-2xl active:scale-[0.97]"
       style={{
-        background: "#ffffff",
-        border: "1px solid #eeeeee",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        background: "var(--surface)",
+        border: "0.5px solid var(--border)",
+        boxShadow: "0 2px 12px rgba(180, 100, 80, 0.06)",
+        transition: "transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)",
       }}
     >
       <Link href={`/title/${item.mediaType}-${item.tmdbId}`} className="flex-shrink-0">
-        <div className="relative w-12 h-[72px] rounded-xl overflow-hidden" style={{ background: "#f7f7f7" }}>
+        <div className="relative w-12 h-[72px] overflow-hidden" style={{ background: "var(--surface-2)", borderRadius: 8 }}>
           {title ? (
-            <PosterImage path={title.poster_path} alt={displayTitle} size="w92" fill className="rounded-xl" />
+            <PosterImage path={title.poster_path} alt={displayTitle} size="w92" fill />
           ) : (
-            <div className="w-full h-full animate-pulse rounded-xl" style={{ background: "#f7f7f7" }} />
+            <div className="w-full h-full animate-pulse" style={{ background: "var(--surface-2)", borderRadius: 8 }} />
           )}
         </div>
       </Link>
 
       <div className="flex-1 min-w-0">
         <Link href={`/title/${item.mediaType}-${item.tmdbId}`}>
-          <p className="font-semibold text-sm line-clamp-1 mb-1" style={{ color: "#1a1a1a" }}>
+          <p className="font-semibold text-sm line-clamp-1 mb-1" style={{ color: "var(--text-primary)" }}>
             {displayTitle}
           </p>
         </Link>
         <div className="flex items-center gap-2 flex-wrap mb-1.5">
-          {year && <span className="text-[11px]" style={{ color: "#999999" }}>{year}</span>}
+          {year && <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{year}</span>}
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium tracking-wide"
-            style={
-              item.mediaType === "tv"
-                ? { background: "#e8f0ff", color: "#3b5bdb" }
-                : { background: "#fff0f0", color: "#ff5757" }
-            }
+            className="text-[11px] font-medium"
+            style={{ background: "transparent", border: "0.5px solid var(--brand)", color: "var(--brand)", borderRadius: 20, padding: "2px 8px" }}
           >
             {item.mediaType === "tv" ? "Series" : "Film"}
           </span>
           {isUpcoming(title) && (
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium tracking-wide"
-              style={{ background: "#eff6ff", color: "#2563eb" }}
+              className="text-[11px] font-medium"
+              style={{ background: "#EEF6FF", color: "#2563EB", border: "0.5px solid #BFDBFE", borderRadius: 20, padding: "2px 8px" }}
             >
               Upcoming
             </span>
@@ -235,7 +258,6 @@ function WatchlistRow({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Status chip — tap to cycle */}
           <button
             onClick={onCycleStatus}
             className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all active:scale-95"
@@ -258,7 +280,7 @@ function WatchlistRow({
           {item.rating && (
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-              style={{ background: "#fff0f0", color: "#ff5757" }}
+              style={{ background: "#FFF1EF", color: "#C44030" }}
             >
               ★ {item.rating}
             </span>
@@ -270,13 +292,13 @@ function WatchlistRow({
       <button
         onClick={onRemove}
         className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 flex-shrink-0"
-        style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}
+        style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)" }}
         title="Remove"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path
             d="M1.5 3H10.5M4.5 3V2H7.5V3M5 5.5V9M7 5.5V9M2 3L2.5 10.5C2.5 11 2.9 11.5 3.5 11.5H8.5C9.1 11.5 9.5 11 9.5 10.5L10 3"
-            stroke="#cccccc" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"
+            stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"
           />
         </svg>
       </button>

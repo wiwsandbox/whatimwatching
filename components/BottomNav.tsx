@@ -98,11 +98,11 @@ export default function BottomNav() {
     <nav
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50"
       style={{
-        background: "rgba(255,255,255,0.95)",
+        background: "rgba(255,250,248,0.95)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        borderTop: "1px solid #eeeeee",
+        borderTop: "0.5px solid var(--border)",
       }}
     >
       <div className="flex items-center justify-around px-2 py-3">

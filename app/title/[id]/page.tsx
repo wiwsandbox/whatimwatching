@@ -42,10 +42,10 @@ export default function TitleDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#ffffff" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--bg)" }}>
         <div
           className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: "#eeeeee", borderTopColor: "#ff5757" }}
+          style={{ borderColor: "var(--border)", borderTopColor: "var(--brand)" }}
         />
       </div>
     );
@@ -53,9 +53,9 @@ export default function TitleDetailPage() {
 
   if (error || !title) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "#ffffff" }}>
-        <p style={{ color: "#999999" }}>Could not load title.</p>
-        <button onClick={() => router.back()} style={{ color: "#ff5757" }} className="text-sm">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "var(--bg)" }}>
+        <p style={{ color: "var(--text-muted)" }}>Could not load title.</p>
+        <button onClick={() => router.back()} style={{ color: "var(--brand)" }} className="text-sm">
           Go back
         </button>
       </div>
@@ -81,15 +81,15 @@ export default function TitleDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen pb-10" style={{ background: "#ffffff" }}>
+      <div className="min-h-screen pb-10" style={{ background: "var(--bg)" }}>
         {/* Back button */}
         <button
           onClick={() => router.back()}
           className="fixed top-12 left-4 z-50 w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(255,255,255,0.9)", border: "1px solid #eeeeee", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+          style={{ background: "rgba(255,250,248,0.9)", border: "0.5px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M11 4L6 9L11 14" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M11 4L6 9L11 14" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
@@ -98,12 +98,12 @@ export default function TitleDetailPage() {
           {backdropUrl ? (
             <Image src={backdropUrl} alt={displayTitle} fill className="object-cover" priority />
           ) : (
-            <div className="w-full h-full" style={{ background: "#f7f7f7" }} />
+            <div className="w-full h-full" style={{ background: "var(--surface-2)" }} />
           )}
           <div
             className="absolute inset-0"
             style={{
-              background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 60%, #ffffff 100%)",
+              background: "linear-gradient(to bottom, rgba(255,250,248,0) 0%, rgba(255,250,248,0.3) 60%, var(--bg) 100%)",
             }}
           />
         </div>
@@ -113,34 +113,30 @@ export default function TitleDetailPage() {
           <div className="flex gap-4 mb-4">
             {/* Poster */}
             <div
-              className="relative w-[90px] h-[135px] rounded-2xl overflow-hidden flex-shrink-0"
-              style={{ border: "2px solid #eeeeee", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+              className="relative w-[90px] h-[135px] overflow-hidden flex-shrink-0"
+              style={{ borderRadius: 16, border: "0.5px solid var(--border)", boxShadow: "0 8px 24px rgba(180,100,80,0.15)" }}
             >
-              <PosterImage path={title.poster_path} alt={displayTitle} size="w185" fill className="rounded-2xl" />
+              <PosterImage path={title.poster_path} alt={displayTitle} size="w185" fill />
             </div>
 
             {/* Basic info */}
             <div className="flex-1 pt-10">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded-full uppercase font-semibold tracking-wide"
-                  style={
-                    mediaType === "tv"
-                      ? { background: "#e8f0ff", color: "#3b5bdb" }
-                      : { background: "#fff0f0", color: "#ff5757" }
-                  }
+                  className="text-[11px] font-medium"
+                  style={{ background: "transparent", border: "0.5px solid var(--brand)", color: "var(--brand)", borderRadius: 20, padding: "2px 8px" }}
                 >
                   {mediaType === "tv" ? "Series" : "Film"}
                 </span>
                 {year && (
-                  <span className="text-xs" style={{ color: "#999999" }}>{year}</span>
+                  <span className="text-xs" style={{ color: "var(--text-secondary)" }}>{year}</span>
                 )}
               </div>
-              <h1 className="text-xl font-bold leading-tight mb-2" style={{ color: "#1a1a1a" }}>
+              <h1 className="text-xl font-bold leading-tight mb-2" style={{ color: "var(--text-primary)" }}>
                 {displayTitle}
               </h1>
               {title.tagline && (
-                <p className="text-xs italic mb-2" style={{ color: "#999999" }}>
+                <p className="text-xs italic mb-2" style={{ color: "var(--text-secondary)" }}>
                   &ldquo;{title.tagline}&rdquo;
                 </p>
               )}
@@ -148,7 +144,7 @@ export default function TitleDetailPage() {
                 <div className="flex items-center gap-1">
                   <span
                     className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: "#ff5757", color: "white" }}
+                    style={{ background: "var(--brand)", color: "white" }}
                   >
                     ★ {watchlistItem.rating}/10
                   </span>
@@ -168,8 +164,8 @@ export default function TitleDetailPage() {
               {title.genres.map((g) => (
                 <span
                   key={g.id}
-                  className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ background: "#f7f7f7", color: "#666666", border: "1px solid #eeeeee" }}
+                  className="px-3 py-1 text-xs font-medium"
+                  style={{ background: "var(--surface)", color: "var(--text-secondary)", border: "0.5px solid var(--border)", borderRadius: 20 }}
                 >
                   {g.name}
                 </span>
@@ -180,10 +176,10 @@ export default function TitleDetailPage() {
           {/* Overview */}
           {title.overview && (
             <div className="mb-6">
-              <h2 className="text-xs font-semibold mb-2 uppercase tracking-widest" style={{ color: "#cccccc" }}>
+              <h2 className="text-[11px] font-semibold mb-2 uppercase tracking-[0.06em]" style={{ color: "var(--text-secondary)" }}>
                 Overview
               </h2>
-              <p className="text-sm leading-relaxed" style={{ color: "#666666" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                 {title.overview}
               </p>
             </div>
@@ -192,7 +188,7 @@ export default function TitleDetailPage() {
           {/* Watchlist status selector */}
           {inWatchlist && watchlistItem ? (
             <div className="mb-3">
-              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#cccccc" }}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] mb-2" style={{ color: "var(--text-secondary)" }}>
                 Your status
               </p>
               <div className="flex gap-2">
@@ -200,11 +196,11 @@ export default function TitleDetailPage() {
                   <button
                     key={s}
                     onClick={() => handleStatusChange(s)}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                    className="flex-1 py-2.5 text-xs font-semibold transition-all active:scale-95"
                     style={
                       watchlistItem.status === s
-                        ? { background: "#ff5757", color: "white" }
-                        : { background: "#f7f7f7", color: "#999999", border: "1px solid #eeeeee" }
+                        ? { background: "var(--brand)", color: "white", borderRadius: 14 }
+                        : { background: "#FFF1EF", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 14 }
                     }
                   >
                     {STATUS_LABELS[s]}
@@ -215,8 +211,8 @@ export default function TitleDetailPage() {
           ) : (
             <button
               onClick={handleAddOrRemove}
-              className="w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
-              style={{ background: "#ff5757", color: "white" }}
+              className="w-full py-4 font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
+              style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path
@@ -229,12 +225,12 @@ export default function TitleDetailPage() {
             </button>
           )}
 
-          {/* Remove from watchlist link */}
+          {/* Remove from watchlist */}
           {inWatchlist && (
             <button
               onClick={() => removeFromWatchlist(tmdbId, mediaType)}
-              className="w-full py-3 rounded-2xl text-sm font-medium mb-3 transition-all active:scale-[0.98]"
-              style={{ background: "#f7f7f7", color: "#cccccc", border: "1px solid #eeeeee" }}
+              className="w-full py-3 text-sm font-medium mb-3 transition-all active:scale-[0.98]"
+              style={{ background: "#FFF1EF", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 14 }}
             >
               Remove from watchlist
             </button>
@@ -243,14 +239,14 @@ export default function TitleDetailPage() {
           {/* Rate button */}
           <button
             onClick={() => setRateOpen(true)}
-            className="w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
-            style={{ background: "#f7f7f7", color: "#1a1a1a", border: "1px solid #eeeeee" }}
+            className="w-full py-4 font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
+            style={{ background: "#FFF1EF", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 14 }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M8 1L9.8 5.5H14.6L10.6 8.6L12.2 13.1L8 10.1L3.8 13.1L5.4 8.6L1.4 5.5H6.2L8 1Z"
-                stroke="#ff5757" strokeWidth="1.5" strokeLinejoin="round"
-                fill={watchlistItem?.rating ? "#ff5757" : "none"}
+                stroke="#C44030" strokeWidth="1.5" strokeLinejoin="round"
+                fill={watchlistItem?.rating ? "#C44030" : "none"}
               />
             </svg>
             {watchlistItem?.rating ? `Your rating: ${watchlistItem.rating}/10` : "Rate this"}
@@ -259,13 +255,13 @@ export default function TitleDetailPage() {
           {/* Recommend CTA */}
           <button
             onClick={() => setRecommendOpen(true)}
-            className="w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-            style={{ background: "#f7f7f7", color: "#1a1a1a", border: "1px solid #eeeeee" }}
+            className="w-full py-4 font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            style={{ background: "#FFF1EF", color: "#C44030", border: "0.5px solid #FACCBC", borderRadius: 14 }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M14 2L2 6.5L7 8.5M14 2L9.5 14L7 8.5M14 2L7 8.5"
-                stroke="#ff5757" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                stroke="#C44030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
               />
             </svg>
             Recommend to a friend

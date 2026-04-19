@@ -59,21 +59,20 @@ export default function SearchPage() {
   const isSearching = query.trim().length > 0;
 
   return (
-    <div className="flex flex-col min-h-screen pb-24" style={{ background: "#ffffff" }}>
+    <div className="flex flex-col min-h-screen pb-24" style={{ background: "var(--bg)" }}>
       <header
         className="sticky top-0 z-40"
-        style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+        style={{ background: "rgba(255,250,248,0.95)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
       >
         <AppHeader />
         <div className="px-4 pb-3">
-          {/* Search input */}
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-2xl"
-            style={{ background: "#f7f7f7", border: "1px solid #eeeeee" }}
+            style={{ background: "var(--surface-2)", border: "0.5px solid var(--border)" }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="8" stroke="#cccccc" strokeWidth="2" />
-              <path d="M21 21L16.65 16.65" stroke="#cccccc" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="11" cy="11" r="8" stroke="var(--text-muted)" strokeWidth="2" />
+              <path d="M21 21L16.65 16.65" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" />
             </svg>
             <input
               ref={inputRef}
@@ -82,17 +81,17 @@ export default function SearchPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Films, series, anything…"
               className="flex-1 bg-transparent text-sm outline-none"
-              style={{ color: "#1a1a1a", fontFamily: "var(--font-dm-sans)" }}
+              style={{ color: "var(--text-primary)", fontFamily: "var(--font-dm-sans)" }}
               autoFocus={false}
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
                 className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: "#eeeeee" }}
+                style={{ background: "var(--border)" }}
               >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M2 2L8 8M8 2L2 8" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M2 2L8 8M8 2L2 8" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </button>
             )}
@@ -102,7 +101,7 @@ export default function SearchPage() {
 
       {/* Section label */}
       <div className="px-4 mb-3">
-        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#cccccc" }}>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: "var(--text-secondary)" }}>
           {isSearching ? `Results for "${query}"` : "Trending this week"}
         </span>
       </div>
@@ -111,12 +110,12 @@ export default function SearchPage() {
         {loading || trendingLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ background: "#f7f7f7" }} />
+              <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ background: "var(--surface-2)" }} />
             ))}
           </div>
         ) : displayList.length === 0 && isSearching ? (
           <div className="flex flex-col items-center py-16 text-center">
-            <p className="text-sm" style={{ color: "#cccccc" }}>No results found</p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No results found</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -159,32 +158,33 @@ function SearchResultRow({
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-2xl"
-      style={{ background: "#ffffff", border: "1px solid #eeeeee", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+      className="flex items-center gap-3 p-3 rounded-2xl active:scale-[0.97]"
+      style={{
+        background: "var(--surface)",
+        border: "0.5px solid var(--border)",
+        boxShadow: "0 2px 12px rgba(180, 100, 80, 0.06)",
+        transition: "transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
     >
       <Link href={`/title/${item.media_type}-${item.id}`} className="flex-shrink-0">
-        <div className="relative w-12 h-[72px] rounded-xl overflow-hidden" style={{ background: "#f7f7f7" }}>
-          <PosterImage path={item.poster_path} alt={title} size="w92" fill className="rounded-xl" />
+        <div className="relative w-12 h-[72px] overflow-hidden" style={{ background: "var(--surface-2)", borderRadius: 8 }}>
+          <PosterImage path={item.poster_path} alt={title} size="w92" fill />
         </div>
       </Link>
 
       <div className="flex-1 min-w-0">
         <Link href={`/title/${item.media_type}-${item.id}`}>
-          <p className="font-semibold text-sm line-clamp-1 leading-snug mb-1" style={{ color: "#1a1a1a" }}>
+          <p className="font-semibold text-sm line-clamp-1 leading-snug mb-1" style={{ color: "var(--text-primary)" }}>
             {title}
           </p>
         </Link>
         <div className="flex items-center gap-2 flex-wrap">
           {year && (
-            <span className="text-[11px]" style={{ color: "#999999" }}>{year}</span>
+            <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>{year}</span>
           )}
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full uppercase font-medium tracking-wide"
-            style={
-              item.media_type === "tv"
-                ? { background: "#e8f0ff", color: "#3b5bdb" }
-                : { background: "#fff0f0", color: "#ff5757" }
-            }
+            className="text-[11px] font-medium"
+            style={{ background: "transparent", border: "0.5px solid var(--brand)", color: "var(--brand)", borderRadius: 20, padding: "2px 8px" }}
           >
             {item.media_type === "tv" ? "Series" : "Film"}
           </span>
@@ -199,14 +199,14 @@ function SearchResultRow({
         className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
         style={
           inWatchlist
-            ? { background: "#f7f7f7", border: "1px solid #eeeeee" }
-            : { background: "#ff5757" }
+            ? { background: "var(--surface-2)", border: "0.5px solid var(--border)" }
+            : { background: "var(--brand)" }
         }
         title={inWatchlist ? "In watchlist" : "Add to watchlist"}
       >
         {inWatchlist ? (
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8L6.5 11.5L13 5" stroke="#cccccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3 8L6.5 11.5L13 5" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ) : (
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
