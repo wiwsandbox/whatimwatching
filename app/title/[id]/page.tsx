@@ -45,7 +45,7 @@ export default function TitleDetailPage() {
   }, [tmdbId, mediaType]);
 
   useEffect(() => {
-    if (tmdbId !== 1586) return;
+    if (tmdbId !== 14658) return;
     if (sessionStorage.getItem("survivorSeen")) return;
     const t = setTimeout(() => {
       setSurvivorActive(true);
