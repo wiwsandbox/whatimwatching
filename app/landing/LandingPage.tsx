@@ -415,7 +415,9 @@ export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/tmdb-trending")
+    fetch(
+      "https://api.themoviedb.org/3/trending/movie/week?api_key=78c87308e5caf2d13af3381e0e94958c&language=en-US"
+    )
       .then((r) => r.json())
       .then((data) => {
         if (data.results) {
