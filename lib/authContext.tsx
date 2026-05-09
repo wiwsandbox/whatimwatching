@@ -18,6 +18,7 @@ export interface Profile {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  onboarding_completed: boolean | null;
 }
 
 interface AuthContextType {

@@ -7,6 +7,7 @@ import ToastDisplay from "@/components/ToastDisplay";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import PushSetup from "@/components/PushSetup";
 import SplashScreen from "@/components/SplashScreen";
+import OnboardingTrigger from "@/components/OnboardingTrigger";
 
 const playfair = Playfair_Display({
   weight: "900",
@@ -55,6 +56,7 @@ export default function RootLayout({
             <AppProvider>
               {children}
               <ToastDisplay />
+              <OnboardingTrigger />
             </AppProvider>
             <PushSetup />
           </AuthProvider>

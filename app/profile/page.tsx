@@ -9,6 +9,7 @@ import { useApp } from "@/lib/store";
 import { useAuth } from "@/lib/authContext";
 import { getClient } from "@/lib/supabase/client";
 import AddFriendSheet from "@/components/AddFriendSheet";
+import OnboardingOverlay from "@/components/OnboardingOverlay";
 
 const STREAMING_SERVICES = [
   "Netflix","Max","Hulu","Apple TV+","Prime Video",
@@ -42,6 +43,7 @@ export default function ProfilePage() {
 
   const [bioSheetOpen, setBioSheetOpen] = useState(false);
   const [installSheetOpen, setInstallSheetOpen] = useState(false);
+  const [wiw101Open, setWiw101Open] = useState(false);
   const [bioInput, setBioInput] = useState("");
   const [bioSaving, setBioSaving] = useState(false);
 
@@ -361,6 +363,30 @@ export default function ProfilePage() {
             className="rounded-2xl overflow-hidden"
             style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)" }}
           >
+            {/* WIW 101 */}
+            <button
+              onClick={() => setWiw101Open(true)}
+              className="w-full flex items-center justify-between px-4 py-3.5 text-sm transition-opacity active:opacity-60"
+              style={{ color: "var(--text-secondary)", borderBottom: "0.5px solid var(--border)" }}
+            >
+              <div className="flex items-center gap-3">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M5 6H11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  <path d="M5 8.5H9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  <path d="M5 11H8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                <div className="text-left">
+                  <p className="text-sm font-semibold leading-tight" style={{ color: "var(--text-primary)" }}>WIW 101</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>A guide to using wiw</p>
+                </div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4L10 8L6 12" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {/* Add to Home Screen */}
             <button
               onClick={() => setInstallSheetOpen(true)}
               className="w-full flex items-center justify-between px-4 py-3.5 text-sm transition-opacity active:opacity-60"
@@ -473,6 +499,13 @@ export default function ProfilePage() {
           onClose={() => setManageFriendsOpen(false)}
         />
       )}
+
+      {/* WIW 101 overlay */}
+      <OnboardingOverlay
+        isOpen={wiw101Open}
+        onClose={() => setWiw101Open(false)}
+        forceShow
+      />
     </div>
   );
 }

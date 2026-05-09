@@ -20,9 +20,13 @@ type ResultState =
 export default function AddFriendSheet({
   isOpen,
   onClose,
+  onSuccess,
+  elevated,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
+  elevated?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
   const [countryCode, setCountryCode] = useState("+1");
@@ -104,12 +108,12 @@ export default function AddFriendSheet({
   return (
     <>
       <div
-        className="fixed inset-0 z-[80] transition-opacity duration-300"
+        className={`fixed inset-0 ${elevated ? "z-[120]" : "z-[80]"} transition-opacity duration-300`}
         style={{ background: "rgba(0,0,0,0.4)", opacity: visible ? 1 : 0 }}
         onClick={onClose}
       />
       <div
-        className="fixed z-[90] w-full max-w-[390px] rounded-t-3xl transition-transform duration-300"
+        className={`fixed ${elevated ? "z-[130]" : "z-[90]"} w-full max-w-[390px] rounded-t-3xl transition-transform duration-300`}
         style={{
           bottom: 0,
           left: "50%",
@@ -196,7 +200,7 @@ export default function AddFriendSheet({
           <div className="space-y-2 pb-2">
             {result?.type === "found" || result?.type === "invited" ? (
               <button
-                onClick={onClose}
+                onClick={() => { onSuccess?.(); onClose(); }}
                 className="w-full py-4 rounded-2xl font-semibold text-sm"
                 style={{ background: "#ff5757", color: "white" }}
               >
