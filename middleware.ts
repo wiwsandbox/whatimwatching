@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ["/auth", "/auth/callback", "/auth/create-profile"];
+const PUBLIC_EXACT = ["/"]; // landing page — must be reachable without auth
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -32,7 +33,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p)) || PUBLIC_EXACT.includes(path);
 
   // Unauthenticated → redirect to /auth
   if (!user && !isPublic) {

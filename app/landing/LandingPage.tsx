@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { ReactNode, CSSProperties } from "react";
 import Link from "next/link";
 
 // ── Intersection-observer reveal hook ─────────────────────────────────────────
@@ -25,8 +26,8 @@ function RevealSection({
   style,
   className,
 }: {
-  children: React.ReactNode;
-  style?: React.CSSProperties;
+  children: ReactNode;
+  style?: CSSProperties;
   className?: string;
 }) {
   const { ref, visible } = useReveal();
