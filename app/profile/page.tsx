@@ -158,7 +158,7 @@ export default function ProfilePage() {
 
   const handleInvite = useCallback(() => {
     const text =
-      "I've been using wiw to share what I'm watching with friends and family — join me: https://getwiwapp.com";
+      "I've been using wiw to share what I'm watching with friends and family — join me: https://getwiwapp.com?ref=invite";
     if (typeof navigator !== "undefined" && navigator.share) {
       navigator.share({ text }).catch(() => {});
     } else {

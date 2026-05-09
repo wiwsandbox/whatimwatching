@@ -19,6 +19,7 @@ export interface Profile {
   bio: string | null;
   created_at: string;
   onboarding_completed: boolean | null;
+  signup_source: string | null;
 }
 
 interface AuthContextType {
@@ -120,7 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!existingProfile) {
         // Auto-create a minimal profile row so foreign-key constraints are met
-        await supabase.from("profiles").insert({ id: userId, phone });
+        const signupSource = localStorage.getItem("wiw_signup_source") ?? "organic";
+        localStorage.removeItem("wiw_signup_source");
+        await supabase.from("profiles").insert({ id: userId, phone, signup_source: signupSource });
       } else {
         // Keep phone in sync for friend-by-phone lookup
         await supabase.from("profiles").update({ phone }).eq("id", userId);
