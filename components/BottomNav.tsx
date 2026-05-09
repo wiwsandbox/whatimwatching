@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApp } from "@/lib/store";
+import OnboardingBanner from "@/components/OnboardingBanner";
 
 const navItems = [
   {
@@ -95,8 +96,9 @@ export default function BottomNav() {
   const { inboxUnreadCount } = useApp();
 
   return (
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50 flex flex-col">
+      <OnboardingBanner />
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50"
       style={{
         background: "rgba(255,250,248,0.95)",
         backdropFilter: "blur(12px)",
@@ -137,5 +139,6 @@ export default function BottomNav() {
         })}
       </div>
     </nav>
+    </div>
   );
 }

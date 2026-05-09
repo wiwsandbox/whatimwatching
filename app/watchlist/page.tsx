@@ -155,28 +155,50 @@ export default function WatchlistPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M19 21L12 16L5 21V5C5 3.9 5.9 3 7 3H17C18.1 3 19 3.9 19 5V21Z"
-                  stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-              {filter === "watched" ? "Nothing watched yet" : "Nothing here yet"}
-            </p>
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              Search for titles to add them here
-            </p>
             {filter === "to_watch" && (
-              <Link
-                href="/search"
-                className="mt-4 px-5 py-2.5 text-sm font-semibold"
-                style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
-              >
-                Find something to watch
-              </Link>
+              <>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 21L12 16L5 21V5C5 3.9 5.9 3 7 3H17C18.1 3 19 3.9 19 5V21Z" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 8V12M12 8L10 10M12 8L14 10" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Nothing to watch yet</p>
+                <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>Add titles you want to watch</p>
+                <Link href="/search" className="px-5 py-2.5 text-sm font-semibold" style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}>
+                  Find something to watch
+                </Link>
+                <Link href="/" className="mt-3 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                  Check your recommendations
+                </Link>
+              </>
+            )}
+            {filter === "watching" && (
+              <>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="var(--text-muted)" strokeWidth="2" />
+                    <path d="M10 8.5L16 12L10 15.5V8.5Z" fill="var(--text-muted)" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Nothing in progress</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Titles you're currently watching appear here</p>
+              </>
+            )}
+            {filter === "watched" && (
+              <>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="var(--text-muted)" strokeWidth="2" />
+                    <path d="M8 12L11 15L16 9" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>No finished titles yet</p>
+                <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>Mark titles as watched to track what you've seen</p>
+                <Link href="/search" className="px-5 py-2.5 text-sm font-semibold" style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}>
+                  Find something to watch
+                </Link>
+              </>
             )}
           </div>
         ) : (

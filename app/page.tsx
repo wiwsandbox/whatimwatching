@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
 import RecommendationCard from "@/components/RecommendationCard";
 import SendMessageSheet from "@/components/SendMessageSheet";
+import AddFriendSheet from "@/components/AddFriendSheet";
 import { useApp } from "@/lib/store";
 import { getMovie, getTVShow } from "@/lib/tmdb";
 import { getClient } from "@/lib/supabase/client";
@@ -22,6 +23,7 @@ export default function InboxPage() {
   const [tabVisible, setTabVisible] = useState(true);
   const [loading, setLoading] = useState(true);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [addFriendOpen, setAddFriendOpen] = useState(false);
 
   const supabase = useRef(getClient()).current;
 
@@ -325,8 +327,15 @@ export default function InboxPage() {
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>No friend activity</p>
-                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Friend requests and messages will appear here</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>No friend activity yet</p>
+                <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>Invite friends to get recommendations, messages, and more</p>
+                <button
+                  onClick={() => setAddFriendOpen(true)}
+                  className="px-5 py-2.5 text-sm font-semibold transition-all active:scale-[0.97]"
+                  style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
+                >
+                  Invite a friend
+                </button>
               </div>
             )}
           </div>
@@ -347,16 +356,20 @@ export default function InboxPage() {
                   style={{ background: "var(--surface-2)" }}
                 >
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4Z"
-                      stroke="var(--text-muted)"
-                      strokeWidth="2"
-                    />
+                    <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4Z" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M22 6L12 13L2 6" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M12 16L12 20M10 20H14" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>All caught up!</p>
-                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>No recommendations waiting for you</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>No recommendations yet</p>
+                <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>Invite a friend and they can send you titles to watch</p>
+                <button
+                  onClick={() => setAddFriendOpen(true)}
+                  className="px-5 py-2.5 text-sm font-semibold transition-all active:scale-[0.97]"
+                  style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
+                >
+                  Invite a friend
+                </button>
               </div>
             ) : (
               enrichedRecs.map((rec) => (
@@ -380,6 +393,11 @@ export default function InboxPage() {
       <SendMessageSheet
         isOpen={composeOpen}
         onClose={() => setComposeOpen(false)}
+      />
+
+      <AddFriendSheet
+        isOpen={addFriendOpen}
+        onClose={() => setAddFriendOpen(false)}
       />
     </div>
   );
