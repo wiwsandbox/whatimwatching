@@ -243,7 +243,7 @@ function PhoneMockup({ industryPoster, rhrPoster }: { industryPoster: string | n
           avatarColor="#ff5757"
           name="Josh"
           time="3h ago"
-          title="Industry"
+          title="Euphoria"
           format="Series"
           rating="★ 9"
         />
@@ -291,7 +291,7 @@ export default function LandingPage() {
         .catch(() => null);
 
     Promise.all([
-      search("Industry HBO"),
+      search("Euphoria HBO"),
       search("Real Housewives of Rhode Island"),
     ]).then(([industry, rhr]) => {
       setIndustryPoster(industry);
@@ -341,7 +341,7 @@ export default function LandingPage() {
         </div>
 
         {/* Gradient overlay */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(253,252,251,0.4) 0%, rgba(253,252,251,1) 85%)", zIndex: 1, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(253,252,251,0) 0%, rgba(253,252,251,0.75) 40%, rgba(253,252,251,1) 62%)", zIndex: 1, pointerEvents: "none" }} />
 
         {/* Hero content */}
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "80px 24px 100px", maxWidth: 560 }}>
@@ -396,7 +396,7 @@ export default function LandingPage() {
                 name="Josh"
                 time="3 hours ago"
                 rating="★ 9"
-                title="Industry"
+                title="Euphoria"
                 format="Series"
                 note="Genuinely the best thing on TV right now."
               />
