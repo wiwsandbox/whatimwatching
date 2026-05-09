@@ -291,7 +291,7 @@ export default function LandingPage() {
         .catch(() => null);
 
     Promise.all([
-      search("Euphoria HBO"),
+      search("Euphoria"),
       search("Real Housewives of Rhode Island"),
     ]).then(([industry, rhr]) => {
       setIndustryPoster(industry);
