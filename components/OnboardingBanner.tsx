@@ -28,6 +28,8 @@ export default function OnboardingBanner() {
     if (profile.onboarding_completed !== true) return;
     if (typeof window === "undefined") return;
     if (localStorage.getItem("wiw_banner_dismissed") === "true") return;
+    // Only show to users who signed up on or after 2026-05-09
+    if (profile.created_at && new Date(profile.created_at) < new Date("2026-05-09")) return;
 
     const invitedFriend = localStorage.getItem("wiw_invited_friend") === "true";
     const addedWatched = watchlist.some((w) => w.status === "watched");
