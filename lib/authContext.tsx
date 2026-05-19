@@ -20,6 +20,7 @@ export interface Profile {
   created_at: string;
   onboarding_completed: boolean | null;
   signup_source: string | null;
+  must_watch_remaining?: number;
 }
 
 interface AuthContextType {

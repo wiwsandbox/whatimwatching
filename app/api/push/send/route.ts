@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { recipient_user_id, notification_type, title } = await request.json();
+  const { recipient_user_id, notification_type, title, is_must_watch } = await request.json();
   if (!recipient_user_id || !notification_type) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
@@ -21,14 +21,20 @@ export async function POST(request: NextRequest) {
     .single();
   const senderName = profile?.display_name || profile?.username || "Someone";
 
+  let notifTitle: string;
   let body: string;
-  if (notification_type === "recommendation") {
+  if (notification_type === "recommendation" && is_must_watch) {
+    notifTitle = `${senderName} sent you a Must Watch`;
+    body = `They really mean it. Open to see what it is.`;
+  } else if (notification_type === "recommendation") {
+    notifTitle = "wiw";
     body = `${senderName} recommended ${title} to you`;
   } else {
+    notifTitle = "wiw";
     body = `${senderName} wants to connect with you on wiw`;
   }
 
-  await sendPushToUser(recipient_user_id, "wiw", body, "/", {
+  await sendPushToUser(recipient_user_id, notifTitle, body, "/", {
     senderId: user.id,
     notificationType: notification_type,
     metadata: { title },

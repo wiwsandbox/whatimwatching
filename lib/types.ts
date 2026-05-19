@@ -44,6 +44,7 @@ export interface Recommendation {
   watchedAt?: string;
   createdAt: string;
   senderRating?: number | null;
+  is_must_watch?: boolean;
   sender?: {
     id: string;
     username: string;

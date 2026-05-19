@@ -69,6 +69,16 @@ interface AppState {
   addRecToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   markWatchedFromRec: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   dismissRecommendation: (recId: string) => Promise<void>;
+  mustWatchRemaining: number;
+  sendMustWatchRecommendation: (
+    tmdbId: number,
+    mediaType: MediaType,
+    title: string,
+    posterPath: string | null,
+    friendIds: string[],
+    friendNames: string[],
+    note: string
+  ) => Promise<{ error: string | null }>;
   userId: string | null;
   messages: Message[];
   unreadMessageCount: number;
@@ -94,6 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [mustWatchRemaining, setMustWatchRemaining] = useState(3);
   const [lastInboxSeenAt, setLastInboxSeenAt] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("wiw_inbox_seen") ?? new Date(0).toISOString();
@@ -112,17 +123,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  // Load must_watch_remaining from profile whenever userId changes
+  useEffect(() => {
+    if (!userId) { setMustWatchRemaining(3); return; }
+    supabase
+      .from("profiles")
+      .select("must_watch_remaining")
+      .eq("id", userId)
+      .single()
+      .then(({ data }) => {
+        if (data) setMustWatchRemaining((data as { must_watch_remaining?: number }).must_watch_remaining ?? 3);
+      });
+  }, [userId, supabase]);
+
   const refreshRecommendations = useCallback(async () => {
     if (!userId) { setRecommendations([]); return; }
-    const { data, error } = await supabase
+
+    // Try with is_must_watch (requires migration 013); fall back if column not yet added
+    const primary = await supabase
       .from("recommendations")
       .select(`
-        id, tmdb_id, media_type, title, poster_path, note, read_at, created_at,
+        id, tmdb_id, media_type, title, poster_path, note, read_at, is_must_watch, created_at,
         sender:sender_id(id, username, display_name, avatar_url)
       `)
       .eq("receiver_id", userId)
       .is("dismissed_at", null)
       .order("created_at", { ascending: false });
+
+    const { data, error } = primary.error
+      ? await supabase
+          .from("recommendations")
+          .select(`
+            id, tmdb_id, media_type, title, poster_path, note, read_at, created_at,
+            sender:sender_id(id, username, display_name, avatar_url)
+          `)
+          .eq("receiver_id", userId)
+          .is("dismissed_at", null)
+          .order("created_at", { ascending: false })
+      : primary;
 
     if (error) {
       console.error("refreshRecommendations error:", error);
@@ -141,6 +179,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           watched: !!r.read_at,
           watchedAt: r.read_at ?? undefined,
           createdAt: r.created_at,
+          is_must_watch: (r as { is_must_watch?: boolean }).is_must_watch ?? false,
           // TODO: join sender's watchlist entry for this tmdbId/mediaType to populate senderRating
           senderRating: null,
           sender: Array.isArray(r.sender) ? r.sender[0] : r.sender,
@@ -440,6 +479,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { error: null };
     },
     [userId, supabase, showToast, logEvent]
+  );
+
+  const sendMustWatchRecommendation = useCallback(
+    async (
+      tmdbId: number,
+      mediaType: MediaType,
+      title: string,
+      posterPath: string | null,
+      friendIds: string[],
+      friendNames: string[],
+      note: string
+    ): Promise<{ error: string | null }> => {
+      if (!userId) return { error: "Not authenticated" };
+      if (mustWatchRemaining <= 0) return { error: "No Must Watches remaining this month" };
+
+      const rows = friendIds.map((friendId) => ({
+        sender_id: userId,
+        receiver_id: friendId,
+        tmdb_id: tmdbId,
+        media_type: mediaType,
+        title,
+        poster_path: posterPath,
+        note: note.trim() || null,
+        is_must_watch: true,
+      }));
+
+      const { error } = await supabase.from("recommendations").insert(rows);
+      if (error) {
+        console.error("sendMustWatchRecommendation error:", error);
+        return { error: error.message };
+      }
+
+      const newRemaining = mustWatchRemaining - 1;
+      await supabase
+        .from("profiles")
+        .update({ must_watch_remaining: newRemaining })
+        .eq("id", userId);
+      setMustWatchRemaining(newRemaining);
+
+      showToast(`Must Watch sent to ${friendNames.join(", ")}`);
+      logEvent("must_watch_sent", { tmdb_id: tmdbId, media_type: mediaType, recipient_count: friendIds.length });
+
+      // Push notifications with Must Watch copy
+      friendIds.forEach((friendId) => {
+        fetch("/api/push/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipient_user_id: friendId,
+            notification_type: "recommendation",
+            title,
+            is_must_watch: true,
+          }),
+        }).catch(() => {});
+      });
+
+      return { error: null };
+    },
+    [userId, mustWatchRemaining, supabase, showToast, logEvent]
   );
 
   const markWatched = useCallback(
@@ -768,6 +866,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         markWatchlistWatched,
         showToast,
         sendRecommendation,
+        mustWatchRemaining,
+        sendMustWatchRecommendation,
         addRecToWatchlist,
         markWatchedFromRec,
         dismissRecommendation,

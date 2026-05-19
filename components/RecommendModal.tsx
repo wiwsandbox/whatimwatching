@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/store";
 import { useAuth } from "@/lib/authContext";
 import { getClient } from "@/lib/supabase/client";
+import MustWatchSheet from "@/components/MustWatchSheet";
 import type { MediaType } from "@/lib/types";
 
 interface Friend {
@@ -31,13 +32,15 @@ export default function RecommendModal({
   tmdbId,
   mediaType,
 }: RecommendModalProps) {
-  const { sendRecommendation } = useApp();
+  const { sendRecommendation, mustWatchRemaining, sendMustWatchRecommendation } = useApp();
   const { user } = useAuth();
   const supabase = getClient();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
+  const [mustWatchSheetOpen, setMustWatchSheetOpen] = useState(false);
+  const [mustWatchSending, setMustWatchSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
 
@@ -99,6 +102,24 @@ export default function RecommendModal({
     if (error) {
       setSendError(error);
     } else {
+      onClose();
+    }
+  };
+
+  const handleMustWatchSend = async () => {
+    if (selectedIds.size === 0) return;
+    setMustWatchSending(true);
+    const selectedFriends = friends.filter((f) => selectedIds.has(f.id));
+    const friendIds = selectedFriends.map((f) => f.id);
+    const friendNames = selectedFriends.map((f) =>
+      (f.display_name || f.username).split(" ")[0]
+    );
+    const { error } = await sendMustWatchRecommendation(
+      tmdbId, mediaType, titleName, posterPath ?? null, friendIds, friendNames, note
+    );
+    setMustWatchSending(false);
+    if (!error) {
+      setMustWatchSheetOpen(false);
       onClose();
     }
   };
@@ -217,6 +238,36 @@ export default function RecommendModal({
           />
         </div>
 
+        {/* Must Watch */}
+        <div className="px-5 mb-3">
+          <button
+            onClick={() => setMustWatchSheetOpen(true)}
+            disabled={selectedIds.size === 0}
+            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            style={
+              mustWatchRemaining === 0 || selectedIds.size === 0
+                ? { background: "#f7f7f7", color: "#cccccc", border: "1px solid #eeeeee" }
+                : { background: "linear-gradient(135deg, #D4AF37, #F5D060)", color: "#1a1a1a" }
+            }
+          >
+            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>MUST WATCH</span>
+            {mustWatchRemaining > 0 && selectedIds.size > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.7 }}>
+                · {mustWatchRemaining} left
+              </span>
+            )}
+          </button>
+          {mustWatchRemaining === 0 && (
+            <p className="text-center text-[10px] mt-1.5" style={{ color: "#cccccc" }}>
+              Resets {(() => {
+                const now = new Date();
+                const reset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                return reset.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+              })()}
+            </p>
+          )}
+        </div>
+
         {/* Error */}
         {sendError && (
           <div className="px-5 mb-3">
@@ -256,6 +307,15 @@ export default function RecommendModal({
           </button>
         </div>
       </div>
+
+      <MustWatchSheet
+        isOpen={mustWatchSheetOpen}
+        onClose={() => setMustWatchSheetOpen(false)}
+        onConfirm={handleMustWatchSend}
+        remaining={mustWatchRemaining}
+        titleName={titleName}
+        sending={mustWatchSending}
+      />
     </>
   );
 }
