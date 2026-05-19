@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
 import { getDisplayTitle, getYear } from "@/lib/tmdb";
@@ -13,7 +12,6 @@ interface RecommendationCardProps {
   onAddToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => void;
   onMarkWatchedFromRec: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => void;
   onDismiss: (recId: string) => void;
-  onMarkOpened: (recId: string) => void;
 }
 
 export default function RecommendationCard({
@@ -21,10 +19,7 @@ export default function RecommendationCard({
   onAddToWatchlist,
   onMarkWatchedFromRec,
   onDismiss,
-  onMarkOpened,
 }: RecommendationCardProps) {
-  const [animPhase, setAnimPhase] = useState<"idle" | "exiting" | "entering">("idle");
-
   const tmdbTitle = rec.tmdbTitle;
   const displayTitle = tmdbTitle ? getDisplayTitle(tmdbTitle) : rec.title || "Loading…";
   const year = tmdbTitle ? getYear(tmdbTitle) : "";
@@ -37,189 +32,49 @@ export default function RecommendationCard({
     ? `https://image.tmdb.org/t/p/w185${posterPath}`
     : null;
 
-  const handleOpen = () => {
-    if (animPhase !== "idle") return;
-    setAnimPhase("exiting");
-    setTimeout(() => {
-      onMarkOpened(rec.id);
-      setAnimPhase("entering");
-      setTimeout(() => setAnimPhase("idle"), 250);
-    }, 200);
-  };
+  const isActioned = rec.watched;
 
-  const animOpacity = animPhase === "exiting" ? 0 : 1;
-  const animTransform = animPhase === "exiting" ? "translateY(-8px)" : "translateY(0)";
-  const animTransition =
-    animPhase === "exiting"
-      ? "opacity 200ms ease, transform 200ms ease"
-      : animPhase === "entering"
-      ? "opacity 250ms ease, transform 250ms ease"
-      : undefined;
+  const cardBg = isActioned ? "var(--surface)" : "#1a1a1a";
+  const posterOpacity = isActioned ? 0.4 : 0.6;
+  const gradientEnd = isActioned ? "var(--surface)" : "#1a1a1a";
+  const titleColor = isActioned ? "var(--text-primary)" : "white";
+  const metaColor = isActioned ? "var(--text-muted)" : "rgba(255,255,255,0.4)";
+  const noteColor = isActioned ? "var(--text-muted)" : "rgba(255,255,255,0.45)";
 
-  // State A — Unopened envelope
-  if (!rec.opened_at && !rec.watched) {
-    return (
-      <div
-        style={{
-          opacity: animOpacity,
-          transform: animTransform,
-          transition: animTransition,
-          background: "#f5eeea",
-          border: "0.5px solid #e8d8d0",
-          borderRadius: 20,
-          boxShadow: "0 6px 28px rgba(180,100,80,0.14)",
-          overflow: "hidden",
-        }}
-      >
-        {/* Flap */}
+  return (
+    <div
+      style={{
+        background: cardBg,
+        borderRadius: 20,
+        boxShadow: isActioned
+          ? "0 2px 12px rgba(180,100,80,0.06)"
+          : "0 4px 24px rgba(0,0,0,0.22)",
+        border: isActioned ? "0.5px solid var(--border)" : undefined,
+        overflow: "hidden",
+        opacity: isActioned ? 0.55 : 1,
+        transition: "opacity 300ms ease, transform 150ms cubic-bezier(0.34,1.56,0.64,1)",
+      }}
+    >
+      {/* Poster */}
+      <div style={{ position: "relative", height: 120, overflow: "hidden", background: isActioned ? "var(--surface-2)" : "#111" }}>
+        {backdropUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={backdropUrl}
+            alt={displayTitle}
+            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: posterOpacity }}
+          />
+        )}
         <div
           style={{
-            height: 80,
-            background: "#eee0d8",
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
+            position: "absolute",
+            inset: 0,
+            background: `linear-gradient(to bottom, transparent 20%, ${gradientEnd} 100%)`,
           }}
-        >
-          {/* Triangle fold */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              clipPath: "polygon(0 100%, 50% 0, 100% 100%)",
-              background: "#e8d5cc",
-            }}
-          />
-          {/* Wax seal */}
-          <div
-            style={{
-              position: "relative",
-              zIndex: 1,
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "#ff5757",
-              boxShadow: "0 2px 8px rgba(255,87,87,0.35)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontStyle: "italic",
-                color: "white",
-                fontSize: 16,
-                fontWeight: 700,
-                lineHeight: 1,
-              }}
-            >
-              w
-            </span>
-          </div>
-        </div>
+        />
 
-        {/* Body */}
-        <div style={{ padding: "12px 16px 16px" }}>
-          {/* Sender row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Avatar
-              avatarUrl={rec.sender?.avatar_url ?? null}
-              displayName={senderName}
-              size={28}
-            />
-            <span style={{ fontSize: 12, color: "#8b7b72" }}>
-              {senderName} sent you something
-            </span>
-          </div>
-
-          {/* Mystery box */}
-          <div
-            style={{
-              background: "#ede0d8",
-              borderRadius: 10,
-              padding: "16px",
-              textAlign: "center",
-              marginBottom: 12,
-            }}
-          >
-            <span style={{ fontSize: 28 }}>🎬</span>
-            <p style={{ fontSize: 12, fontStyle: "italic", color: "#a08070", marginTop: 6 }}>
-              A title they think you&apos;ll love
-            </p>
-          </div>
-
-          {/* Note */}
-          {rec.note && (
-            <p
-              style={{
-                fontSize: 12,
-                fontStyle: "italic",
-                color: "#a08070",
-                marginBottom: 12,
-                lineHeight: 1.4,
-              }}
-            >
-              &ldquo;{rec.note}&rdquo;
-            </p>
-          )}
-
-          {/* CTA */}
-          <button
-            onClick={handleOpen}
-            style={{
-              width: "100%",
-              background: "#ff5757",
-              color: "white",
-              borderRadius: 12,
-              padding: "12px",
-              fontWeight: 600,
-              fontSize: 14,
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Tap to open
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // State C — Actioned (watched)
-  if (rec.watched) {
-    return (
-      <div
-        style={{
-          opacity: 0.55,
-          background: "var(--surface)",
-          borderRadius: 20,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.22)",
-          overflow: "hidden",
-          transition: "all 300ms ease",
-        }}
-      >
-        {/* Poster */}
-        <div style={{ position: "relative", height: 120, overflow: "hidden", background: "var(--surface-2)" }}>
-          {backdropUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={backdropUrl}
-              alt={displayTitle}
-              style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.4 }}
-            />
-          )}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(to bottom, transparent 20%, var(--surface) 100%)",
-            }}
-          />
-          {/* Sender badge */}
+        {/* Sender badge — top-left */}
+        {isActioned ? (
           <div
             style={{
               position: "absolute",
@@ -236,28 +91,113 @@ export default function RecommendationCard({
             <Avatar avatarUrl={rec.sender?.avatar_url ?? null} displayName={senderName} size={22} />
             <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-primary)" }}>{senderName}</span>
           </div>
-        </div>
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <Avatar avatarUrl={rec.sender?.avatar_url ?? null} displayName={senderName} size={22} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: "white" }}>{senderName}</span>
+          </div>
+        )}
 
-        {/* Content */}
-        <div style={{ padding: "10px 12px 14px" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4, lineHeight: 1.2 }}>
+        {/* Dismiss button — top-right */}
+        <button
+          onClick={() => onDismiss(rec.id)}
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: isActioned ? "var(--surface-2)" : "rgba(255,255,255,0.15)",
+            border: isActioned ? "0.5px solid var(--border)" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+        >
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+            <path
+              d="M1 1L7 7M7 1L1 7"
+              stroke={isActioned ? "var(--text-muted)" : "white"}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: "10px 12px 14px" }}>
+        {/* Title + rating row */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+          <h3
+            style={{
+              fontSize: 15,
+              fontWeight: 800,
+              color: titleColor,
+              lineHeight: 1.2,
+              flex: 1,
+            }}
+          >
             {displayTitle}
           </h3>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: rec.note ? 6 : 10 }}>
-            {year && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{year}</span>}
-            {year && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>·</span>}
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-              {rec.mediaType === "tv" ? "Series" : "Film"}
-            </span>
-          </div>
-
-          {rec.note && (
-            <p style={{ fontSize: 12, fontStyle: "italic", color: "var(--text-muted)", marginBottom: 10, lineHeight: 1.4 }}>
-              &ldquo;{rec.note}&rdquo;
-            </p>
+          {rec.senderRating != null && (
+            <div
+              style={{
+                background: "#ff5757",
+                borderRadius: 9,
+                padding: "4px 8px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ fontSize: 18, fontWeight: 800, color: "white", lineHeight: 1 }}>
+                {rec.senderRating}
+              </span>
+              <span style={{ fontSize: 7, color: "rgba(255,255,255,0.7)", lineHeight: 1 }}>/10</span>
+            </div>
           )}
+        </div>
 
+        {/* Year + media type */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: rec.note ? 6 : 12 }}>
+          {year && (
+            <span style={{ fontSize: 9, color: metaColor }}>{year}</span>
+          )}
+          <span
+            style={{
+              fontSize: 9,
+              color: isActioned ? "var(--text-secondary)" : "#ff8080",
+              border: isActioned ? "0.5px solid var(--border)" : "0.5px solid #ff5757",
+              borderRadius: 20,
+              padding: "2px 6px",
+            }}
+          >
+            {rec.mediaType === "tv" ? "Series" : "Film"}
+          </span>
+        </div>
+
+        {/* Note */}
+        {rec.note && (
+          <p style={{ fontSize: 10, fontStyle: "italic", color: noteColor, marginBottom: 12, lineHeight: 1.4 }}>
+            &ldquo;{rec.note}&rdquo;
+          </p>
+        )}
+
+        {/* CTAs */}
+        {isActioned ? (
           <div style={{ display: "flex", gap: 8 }}>
             <span
               style={{
@@ -286,134 +226,45 @@ export default function RecommendationCard({
               Details
             </Link>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // State B — Opened, unactioned
-  return (
-    <div
-      style={{
-        opacity: animOpacity,
-        transform: animTransform,
-        transition: animTransition ?? "all 300ms ease",
-        background: "#1a1a1a",
-        borderRadius: 20,
-        boxShadow: "0 4px 24px rgba(0,0,0,0.22)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Poster */}
-      <div style={{ position: "relative", height: 120, overflow: "hidden", background: "#111" }}>
-        {backdropUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={backdropUrl}
-            alt={displayTitle}
-            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }}
-          />
+        ) : (
+          <>
+            <button
+              onClick={() => onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
+              style={{
+                width: "100%",
+                display: "block",
+                background: "#ff5757",
+                color: "white",
+                borderRadius: 12,
+                padding: "10px",
+                fontSize: 11,
+                fontWeight: 700,
+                border: "none",
+                cursor: "pointer",
+                marginBottom: 6,
+              }}
+            >
+              Add to Watchlist
+            </button>
+            <button
+              onClick={() => onMarkWatchedFromRec(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
+              style={{
+                width: "100%",
+                display: "block",
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.6)",
+                borderRadius: 12,
+                padding: "8px",
+                fontSize: 11,
+                fontWeight: 600,
+                border: "0.5px solid rgba(255,255,255,0.12)",
+                cursor: "pointer",
+              }}
+            >
+              Already watched
+            </button>
+          </>
         )}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to bottom, transparent 20%, #1a1a1a 100%)",
-          }}
-        />
-        {/* Sender badge overlay */}
-        <div
-          style={{
-            position: "absolute",
-            top: 8,
-            left: 8,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Avatar avatarUrl={rec.sender?.avatar_url ?? null} displayName={senderName} size={22} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: "white" }}>{senderName}</span>
-        </div>
-        {/* Dismiss button */}
-        <button
-          onClick={() => onDismiss(rec.id)}
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            width: 22,
-            height: 22,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.15)",
-            border: "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-            <path d="M1 1L7 7M7 1L1 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: "10px 12px 14px" }}>
-        <h3 style={{ fontSize: 15, fontWeight: 800, color: "white", marginBottom: 4, lineHeight: 1.2 }}>
-          {displayTitle}
-        </h3>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: rec.note ? 6 : 12 }}>
-          {year && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{year}</span>}
-          {year && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>·</span>}
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
-            {rec.mediaType === "tv" ? "Series" : "Film"}
-          </span>
-        </div>
-
-        {rec.note && (
-          <p style={{ fontSize: 12, fontStyle: "italic", color: "rgba(255,255,255,0.45)", marginBottom: 12, lineHeight: 1.4 }}>
-            &ldquo;{rec.note}&rdquo;
-          </p>
-        )}
-
-        <button
-          onClick={() => onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
-          style={{
-            width: "100%",
-            background: "#ff5757",
-            color: "white",
-            borderRadius: 12,
-            padding: "11px",
-            fontWeight: 600,
-            fontSize: 14,
-            border: "none",
-            cursor: "pointer",
-            marginBottom: 8,
-            display: "block",
-          }}
-        >
-          Add to Watchlist
-        </button>
-        <button
-          onClick={() => onMarkWatchedFromRec(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
-          style={{
-            width: "100%",
-            background: "rgba(255,255,255,0.08)",
-            color: "rgba(255,255,255,0.6)",
-            borderRadius: 12,
-            padding: "11px",
-            fontWeight: 600,
-            fontSize: 14,
-            border: "0.5px solid rgba(255,255,255,0.12)",
-            cursor: "pointer",
-            display: "block",
-          }}
-        >
-          Already watched
-        </button>
       </div>
     </div>
   );

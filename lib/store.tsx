@@ -69,7 +69,6 @@ interface AppState {
   addRecToWatchlist: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   markWatchedFromRec: (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => Promise<void>;
   dismissRecommendation: (recId: string) => Promise<void>;
-  markRecOpened: (recId: string) => Promise<void>;
   userId: string | null;
   messages: Message[];
   unreadMessageCount: number;
@@ -115,30 +114,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshRecommendations = useCallback(async () => {
     if (!userId) { setRecommendations([]); return; }
-
-    // Try with opened_at (requires migration 011). Fall back without it if the
-    // column doesn't exist yet so recs still load while the migration is pending.
-    const primary = await supabase
+    const { data, error } = await supabase
       .from("recommendations")
       .select(`
-        id, tmdb_id, media_type, title, poster_path, note, read_at, opened_at, created_at,
+        id, tmdb_id, media_type, title, poster_path, note, read_at, created_at,
         sender:sender_id(id, username, display_name, avatar_url)
       `)
       .eq("receiver_id", userId)
       .is("dismissed_at", null)
       .order("created_at", { ascending: false });
-
-    const { data, error } = primary.error
-      ? await supabase
-          .from("recommendations")
-          .select(`
-            id, tmdb_id, media_type, title, poster_path, note, read_at, created_at,
-            sender:sender_id(id, username, display_name, avatar_url)
-          `)
-          .eq("receiver_id", userId)
-          .is("dismissed_at", null)
-          .order("created_at", { ascending: false })
-      : primary;
 
     if (error) {
       console.error("refreshRecommendations error:", error);
@@ -157,7 +141,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           watched: !!r.read_at,
           watchedAt: r.read_at ?? undefined,
           createdAt: r.created_at,
-          opened_at: (r as { opened_at?: string | null }).opened_at ?? null,
+          // TODO: join sender's watchlist entry for this tmdbId/mediaType to populate senderRating
+          senderRating: null,
           sender: Array.isArray(r.sender) ? r.sender[0] : r.sender,
         }))
       );
@@ -534,20 +519,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [supabase, logEvent]
   );
 
-  const markRecOpened = useCallback(
-    async (recId: string) => {
-      const now = new Date().toISOString();
-      await supabase
-        .from("recommendations")
-        .update({ opened_at: now })
-        .eq("id", recId);
-      setRecommendations((prev) =>
-        prev.map((r) => r.id === recId ? { ...r, opened_at: now } : r)
-      );
-    },
-    [supabase]
-  );
-
   const addRecToWatchlist = useCallback(
     async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
       if (!userId) return;
@@ -800,7 +771,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addRecToWatchlist,
         markWatchedFromRec,
         dismissRecommendation,
-        markRecOpened,
         userId,
         messages,
         unreadMessageCount,
