@@ -209,6 +209,8 @@ export default function ProfilePage() {
 
         await updateProfile({ avatar_url: publicUrl });
       } catch (err) {
+        const msg = err instanceof Error ? err.message : JSON.stringify(err);
+        alert("Avatar upload failed: " + msg);
         console.error("Avatar upload failed:", err);
       } finally {
         setAvatarUploading(false);
