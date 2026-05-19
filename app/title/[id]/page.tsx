@@ -7,6 +7,7 @@ import PosterImage from "@/components/PosterImage";
 import StreamingProviders from "@/components/StreamingProviders";
 import RecommendModal from "@/components/RecommendModal";
 import RatingSelector from "@/components/RatingSelector";
+import FriendContextStrip from "@/components/FriendContextStrip";
 import { getMovie, getTVShow, tmdbImage, getDisplayTitle, getYear } from "@/lib/tmdb";
 import { useApp } from "@/lib/store";
 import type { TMDBTitle, MediaType, WatchlistStatus } from "@/lib/types";
@@ -215,6 +216,8 @@ export default function TitleDetailPage() {
               </p>
             </div>
           )}
+
+          <FriendContextStrip tmdbId={tmdbId} mediaType={mediaType} />
 
           {/* Watchlist status selector */}
           {inWatchlist && watchlistItem ? (
