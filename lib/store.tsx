@@ -115,7 +115,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshRecommendations = useCallback(async () => {
     if (!userId) { setRecommendations([]); return; }
-    const { data, error } = await supabase
+
+    // Try with opened_at (requires migration 011). Fall back without it if the
+    // column doesn't exist yet so recs still load while the migration is pending.
+    const primary = await supabase
       .from("recommendations")
       .select(`
         id, tmdb_id, media_type, title, poster_path, note, read_at, opened_at, created_at,
@@ -124,6 +127,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .eq("receiver_id", userId)
       .is("dismissed_at", null)
       .order("created_at", { ascending: false });
+
+    const { data, error } = primary.error
+      ? await supabase
+          .from("recommendations")
+          .select(`
+            id, tmdb_id, media_type, title, poster_path, note, read_at, created_at,
+            sender:sender_id(id, username, display_name, avatar_url)
+          `)
+          .eq("receiver_id", userId)
+          .is("dismissed_at", null)
+          .order("created_at", { ascending: false })
+      : primary;
 
     if (error) {
       console.error("refreshRecommendations error:", error);
