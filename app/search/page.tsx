@@ -6,7 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
 import PosterImage from "@/components/PosterImage";
 import StreamingProviders from "@/components/StreamingProviders";
-import { searchMulti, getTrending, getDisplayTitle, getYear } from "@/lib/tmdb";
+import { searchMulti, getDisplayTitle, getYear } from "@/lib/tmdb";
 import { useApp } from "@/lib/store";
 import type { TMDBSearchResult, MediaType } from "@/lib/types";
 
@@ -21,12 +21,14 @@ export default function SearchPage() {
   const { addToWatchlist, isInWatchlist } = useApp();
 
   useEffect(() => {
-    getTrending("all", "week")
+    fetch("/api/tmdb-trending?mediaType=all&timeWindow=week")
+      .then((r) => r.json())
       .then((data) => {
         setTrending(
-          data.results.filter((r) => r.media_type === "movie" || r.media_type === "tv").slice(0, 12)
+          (data.results || []).filter((r: TMDBSearchResult) => r.media_type === "movie" || r.media_type === "tv").slice(0, 12)
         );
       })
+      .catch(() => {})
       .finally(() => setTrendingLoading(false));
   }, []);
 
