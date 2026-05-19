@@ -43,6 +43,7 @@ export interface Recommendation {
   watched: boolean;
   watchedAt?: string;
   createdAt: string;
+  opened_at?: string | null;
   sender?: {
     id: string;
     username: string;
