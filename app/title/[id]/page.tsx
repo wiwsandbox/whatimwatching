@@ -186,13 +186,13 @@ export default function TitleDetailPage() {
           </div>
 
           {/* Streaming providers */}
-          <div className="mb-4 h-10 flex items-center">
+          <div className="mb-2 h-10 flex items-center">
             <StreamingProviders id={tmdbId} mediaType={mediaType} size="md" maxShow={6} />
           </div>
 
           {/* Genres */}
           {title.genres && title.genres.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-3">
               {title.genres.map((g) => (
                 <span
                   key={g.id}
@@ -207,7 +207,7 @@ export default function TitleDetailPage() {
 
           {/* Overview */}
           {title.overview && (
-            <div className="mb-6">
+            <div className="mb-4">
               <h2 className="text-[11px] font-semibold mb-2 uppercase tracking-[0.06em]" style={{ color: "var(--text-secondary)" }}>
                 Overview
               </h2>
