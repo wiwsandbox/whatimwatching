@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import Avatar from "@/components/Avatar";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
 import RecommendationCard from "@/components/RecommendationCard";
@@ -182,9 +183,6 @@ export default function InboxPage() {
                   const isSent = msg.senderId === userId;
                   const senderName = msg.sender?.display_name || msg.sender?.username || "Someone";
                   const recipientName = msg.receiver?.display_name || msg.receiver?.username || "Someone";
-                  const avatarColor = msg.sender?.avatar_url?.startsWith("color:")
-                    ? msg.sender.avatar_url.slice(6)
-                    : "var(--brand)";
                   return (
                     <div
                       key={msg.id}
@@ -215,12 +213,11 @@ export default function InboxPage() {
                           </>
                         ) : (
                           <>
-                            <div
-                              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-                            >
-                              {senderName.charAt(0).toUpperCase()}
-                            </div>
+                            <Avatar
+                              avatarUrl={msg.sender?.avatar_url ?? null}
+                              displayName={senderName}
+                              size={28}
+                            />
                             <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{senderName}</span>
                             {!msg.readAt && (
                               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--brand)" }} />
@@ -274,12 +271,11 @@ export default function InboxPage() {
                       className="flex items-center gap-3 p-3 rounded-2xl"
                       style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180, 100, 80, 0.06)" }}
                     >
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                        style={{ background: "var(--brand)", color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-                      >
-                        {name.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar
+                        avatarUrl={req.sender.avatar_url}
+                        displayName={name}
+                        size={40}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{name}</p>
                         {req.sender.username && (

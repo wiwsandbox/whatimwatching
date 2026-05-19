@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Avatar from "@/components/Avatar";
 import { getClient } from "@/lib/supabase/client";
 import { useApp } from "@/lib/store";
 
@@ -161,7 +162,6 @@ export default function SendMessageSheet({
               <div className="space-y-2 max-h-[180px] overflow-y-auto">
                 {friends.map((f) => {
                   const name = f.display_name || f.username || "Unknown";
-                  const avatarColor = f.avatar_url?.startsWith("color:") ? f.avatar_url.slice(6) : "#ff5757";
                   const selected = selectedFriendId === f.id;
                   return (
                     <button
@@ -174,12 +174,11 @@ export default function SendMessageSheet({
                           : { background: "#f7f7f7", border: "1px solid #eeeeee" }
                       }
                     >
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                        style={{ background: selected ? "rgba(255,255,255,0.3)" : avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
-                      >
-                        {name.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar
+                        avatarUrl={f.avatar_url}
+                        displayName={name}
+                        size={32}
+                      />
                       <span className="text-sm font-semibold" style={{ color: selected ? "white" : "#1a1a1a" }}>{name}</span>
                     </button>
                   );

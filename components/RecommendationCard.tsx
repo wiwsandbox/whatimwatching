@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Avatar from "./Avatar";
 import PosterImage from "./PosterImage";
 import StreamingProviders from "./StreamingProviders";
 import { getDisplayTitle, getYear } from "@/lib/tmdb";
@@ -67,12 +68,11 @@ export default function RecommendationCard({
           <div>
             {/* Sender */}
             <div className="flex items-center gap-1.5 mb-1.5">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                style={{ background: "var(--brand)", color: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-              >
-                {senderName.charAt(0).toUpperCase()}
-              </div>
+              <Avatar
+                avatarUrl={rec.sender?.avatar_url ?? null}
+                displayName={senderName}
+                size={28}
+              />
               <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
                 {senderName}
               </span>

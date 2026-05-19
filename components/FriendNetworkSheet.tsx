@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Avatar from "@/components/Avatar";
 import { getClient } from "@/lib/supabase/client";
 
 interface FriendProfile {
@@ -115,9 +116,6 @@ export default function FriendNetworkSheet({
             <div className="space-y-2 pb-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
               {friends.map((f) => {
                 const name = f.display_name || f.username || "Unknown";
-                const avatarColor = f.avatar_url?.startsWith("color:")
-                  ? f.avatar_url.slice(6)
-                  : "#ff5757";
                 const isMyFriend = myFriendIds.has(f.id);
                 const isPending = pendingIds.has(f.id);
 
@@ -132,12 +130,11 @@ export default function FriendNetworkSheet({
                       onClick={onClose}
                       className="flex items-center gap-3 flex-1 min-w-0"
                     >
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                        style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)" }}
-                      >
-                        {name.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar
+                        avatarUrl={f.avatar_url}
+                        displayName={name}
+                        size={40}
+                      />
                       <div className="min-w-0">
                         <p className="font-semibold text-sm" style={{ color: "#1a1a1a" }}>{name}</p>
                         {f.username && (

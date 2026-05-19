@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Avatar from "@/components/Avatar";
 import PosterImage from "@/components/PosterImage";
 import StreamingProviders from "@/components/StreamingProviders";
 import { getMovie, getTVShow, getDisplayTitle, getYear } from "@/lib/tmdb";
@@ -145,9 +146,6 @@ export default function FriendProfilePage() {
     }));
 
   const activeList = enrich(tab === "watched" ? watchedItems : toWatchItems);
-  const avatarColor = friend?.avatar_url?.startsWith("color:")
-    ? friend.avatar_url.slice(6)
-    : "var(--brand)";
   const displayName = friend?.display_name || friend?.username || "…";
 
   return (
@@ -166,12 +164,11 @@ export default function FriendProfilePage() {
       {/* Header */}
       <div className="px-4 pt-16 pb-5">
         <div className="flex items-center gap-4 mb-5">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
-            style={{ background: avatarColor, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-          >
-            {displayName.charAt(0).toUpperCase()}
-          </div>
+          <Avatar
+            avatarUrl={friend?.avatar_url}
+            displayName={displayName}
+            size={64}
+          />
           <div>
             <h1 className="text-xl font-bold leading-none mb-1" style={{ color: "var(--text-primary)" }}>
               {displayName}

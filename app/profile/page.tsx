@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
+import Avatar from "@/components/Avatar";
 import { useApp } from "@/lib/store";
 import { useAuth } from "@/lib/authContext";
 import { getClient } from "@/lib/supabase/client";
@@ -49,15 +50,13 @@ export default function ProfilePage() {
 
   const [activeServices, setActiveServices] = useState<Set<string>>(new Set());
   const [activeGenres, setActiveGenres] = useState<Set<string>>(new Set());
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const watchedCount = watchlist.filter((w) => w.status === "watched").length;
   const friendsCount = friends.length;
 
   const displayName = profile?.display_name || profile?.username || user?.email?.split("@")[0] || "?";
   const username = profile?.username || user?.email?.split("@")[0] || "";
-  const avatarColor = profile?.avatar_url?.startsWith("color:")
-    ? profile.avatar_url.slice(6)
-    : "var(--brand)";
 
   useEffect(() => {
     if (!user) return;
@@ -166,6 +165,55 @@ export default function ProfilePage() {
     }
   }, []);
 
+  const handleAvatarTap = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file || !user) return;
+
+      setAvatarUploading(true);
+      try {
+        let uploadFile = file;
+        if (file.size > 500_000) {
+          const bitmap = await createImageBitmap(file);
+          const canvas = document.createElement("canvas");
+          const MAX = 600;
+          const scale = Math.min(MAX / bitmap.width, MAX / bitmap.height, 1);
+          canvas.width = Math.round(bitmap.width * scale);
+          canvas.height = Math.round(bitmap.height * scale);
+          const ctx = canvas.getContext("2d")!;
+          ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          const blob = await new Promise<Blob>((res) =>
+            canvas.toBlob((b) => res(b!), "image/jpeg", 0.82)
+          );
+          uploadFile = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+        }
+
+        const path = `${user.id}/avatar.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(path, uploadFile, { upsert: true, contentType: "image/jpeg" });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(path);
+
+        const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+        await updateProfile({ avatar_url: publicUrl });
+      } catch (err) {
+        console.error("Avatar upload failed:", err);
+      } finally {
+        setAvatarUploading(false);
+      }
+    };
+    input.click();
+  }, [user, supabase, updateProfile]);
+
   const handleSignOut = async () => {
     await signOut();
     router.replace("/auth");
@@ -190,12 +238,13 @@ export default function ProfilePage() {
           {/* Avatar + name */}
           <div className="p-4 flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div
-                className="rounded-full flex items-center justify-center text-2xl font-bold"
-                style={{ width: 56, height: 56, background: avatarColor, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-              >
-                {displayName.charAt(0).toUpperCase()}
-              </div>
+              <Avatar
+                avatarUrl={profile?.avatar_url}
+                displayName={displayName}
+                size={56}
+                uploading={avatarUploading}
+                onClick={handleAvatarTap}
+              />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -559,9 +608,6 @@ function ManageFriendsSheet({
           ) : (
             friends.map((friend) => {
               const name = friend.display_name || friend.username || "?";
-              const color = friend.avatar_url?.startsWith("color:")
-                ? friend.avatar_url.slice(6)
-                : "var(--brand)";
               return (
                 <Link
                   key={friend.id}
@@ -575,12 +621,11 @@ function ManageFriendsSheet({
                     display: "flex",
                   }}
                 >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: color, color: "white", fontFamily: "var(--font-playfair)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)" }}
-                  >
-                    {name.charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar
+                    avatarUrl={friend.avatar_url}
+                    displayName={name}
+                    size={40}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{name}</p>
                     {friend.username && (
