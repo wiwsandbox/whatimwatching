@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
+import MustWatchReceivedSheet from "./MustWatchReceivedSheet";
 import { getDisplayTitle, getYear } from "@/lib/tmdb";
 import type { Recommendation, TMDBTitle, MediaType } from "@/lib/types";
 
@@ -22,6 +24,7 @@ export default function RecommendationCard({
   onMarkWatchedFromRec,
   onDismiss,
 }: RecommendationCardProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
   const tmdbTitle = rec.tmdbTitle;
   const displayTitle = tmdbTitle ? getDisplayTitle(tmdbTitle) : rec.title || "Loading…";
   const year = tmdbTitle ? getYear(tmdbTitle) : "";
@@ -79,7 +82,9 @@ export default function RecommendationCard({
   const primaryCtaWeight = isMustWatch ? 800 : 700;
 
   return (
+    <>
     <div
+      onClick={isMustWatch ? () => setSheetOpen(true) : undefined}
       style={{
         background: cardBg,
         borderRadius: 20,
@@ -88,6 +93,7 @@ export default function RecommendationCard({
         overflow: "hidden",
         opacity: isActioned ? 0.55 : 1,
         transition: "opacity 300ms ease, transform 150ms cubic-bezier(0.34,1.56,0.64,1)",
+        cursor: isMustWatch ? "pointer" : undefined,
       }}
     >
       {/* Poster */}
@@ -196,7 +202,7 @@ export default function RecommendationCard({
             </span>
           )}
           <button
-            onClick={() => onDismiss(rec.id)}
+            onClick={(e) => { e.stopPropagation(); onDismiss(rec.id); }}
             style={{
               width: 22,
               height: 22,
@@ -323,7 +329,14 @@ export default function RecommendationCard({
         ) : (
           <>
             <button
-              onClick={() => onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isMustWatch) {
+                  setSheetOpen(true);
+                } else {
+                  onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath);
+                }
+              }}
               style={{
                 width: "100%",
                 display: "block",
@@ -341,7 +354,10 @@ export default function RecommendationCard({
               Add to Watchlist
             </button>
             <button
-              onClick={() => onMarkWatchedFromRec(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkWatchedFromRec(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath);
+              }}
               style={{
                 width: "100%",
                 display: "block",
@@ -361,5 +377,20 @@ export default function RecommendationCard({
         )}
       </div>
     </div>
+
+    {isMustWatch && (
+      <MustWatchReceivedSheet
+        isOpen={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onAddToWatchlist={() => {
+          setSheetOpen(false);
+          onAddToWatchlist(rec.id, rec.tmdbId, rec.mediaType, displayTitle, posterPath);
+        }}
+        senderName={senderName}
+        senderAvatarUrl={rec.sender?.avatar_url ?? null}
+        title={displayTitle}
+      />
+    )}
+    </>
   );
 }
