@@ -1,4 +1,4 @@
-const CACHE_NAME = "wiw-shell-v1";
+const CACHE_NAME = "wiw-shell-v2";
 const SHELL_URLS = ["/", "/search", "/watchlist", "/profile", "/manifest.json"];
 
 // Install: cache the app shell
@@ -28,8 +28,11 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and cross-origin requests
   if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // Skip Supabase and API calls — always go to network
-  if (url.pathname.startsWith("/api/") || url.hostname.includes("supabase")) return;
+  // Never cache API routes — always go to network
+  if (url.pathname.startsWith("/api/") || url.hostname.includes("supabase")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   // For navigation requests: network-first, fall back to cached "/"
   if (event.request.mode === "navigate") {
