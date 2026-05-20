@@ -142,6 +142,10 @@ export default function RecommendModal({
           transform: `translateX(-50%) translateY(${visible ? "0%" : "100%"})`,
           paddingBottom: "max(24px, env(safe-area-inset-bottom))",
           boxShadow: "0 -4px 32px rgba(0,0,0,0.12)",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "hidden",
         }}
       >
         {/* Handle */}
@@ -184,11 +188,21 @@ export default function RecommendModal({
           </button>
         </div>
 
+        <div style={{ flex: 1, overflowY: "hidden", display: "flex", flexDirection: "column" }}>
         {/* Friends */}
-        <div className="px-5 mb-4 space-y-2">
+        <div className="px-5 mb-4">
           <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: "#999999" }}>
             Send to
           </p>
+          <div
+            style={{
+              overflowY: "auto",
+              maxHeight: "35vh",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
           {friends.length === 0 && (
             <p className="text-sm py-4 text-center" style={{ color: "#cccccc" }}>
               No friends yet — add some in your profile
@@ -233,6 +247,7 @@ export default function RecommendModal({
               </button>
             );
           })}
+          </div>
         </div>
 
         {/* Note */}
@@ -327,6 +342,7 @@ export default function RecommendModal({
               ? "Select a friend"
               : `Send to ${selectedIds.size} friend${selectedIds.size > 1 ? "s" : ""}`}
           </button>
+        </div>
         </div>
       </div>
 
