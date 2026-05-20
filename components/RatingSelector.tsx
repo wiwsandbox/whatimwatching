@@ -76,25 +76,23 @@ export default function RatingSelector({
         onClick={onClose}
       />
 
-      {/* Full-height modal */}
+      {/* Sheet — content-sized, slides up from bottom */}
       <div
         className="fixed z-[90] w-full max-w-[390px] transition-transform duration-300"
         style={{
-          top: 0,
           bottom: 0,
           left: "50%",
           transform: `translateX(-50%) translateY(${visible ? "0%" : "100%"})`,
-          background: "#FDFCFB",
-          display: "flex",
-          flexDirection: "column",
+          borderRadius: "20px 20px 0 0",
+          overflow: "hidden",
+          boxShadow: "0 -4px 32px rgba(0,0,0,0.2)",
         }}
       >
         {/* ── Top band ── */}
         <div
           style={{
             position: "relative",
-            height: 220,
-            flexShrink: 0,
+            height: 200,
             background: "#111111",
             overflow: "hidden",
           }}
@@ -123,7 +121,7 @@ export default function RatingSelector({
               bottom: 0,
               left: 0,
               right: 0,
-              height: 120,
+              height: 100,
               background: "linear-gradient(to bottom, transparent, #FDFCFB)",
             }}
           />
@@ -133,8 +131,8 @@ export default function RatingSelector({
             onClick={onClose}
             style={{
               position: "absolute",
-              top: 16,
-              right: 16,
+              top: 14,
+              right: 14,
               width: 30,
               height: 30,
               borderRadius: "50%",
@@ -156,7 +154,7 @@ export default function RatingSelector({
           <div
             style={{
               position: "absolute",
-              bottom: 16,
+              bottom: 14,
               left: 16,
               right: 16,
               display: "flex",
@@ -171,32 +169,29 @@ export default function RatingSelector({
                 src={posterUrl}
                 alt={titleName}
                 style={{
-                  width: 64,
-                  height: 92,
-                  borderRadius: 8,
+                  width: 56,
+                  height: 80,
+                  borderRadius: 7,
                   objectFit: "cover",
                   flexShrink: 0,
                 }}
               />
             )}
-            <div style={{ minWidth: 0, paddingBottom: 4 }}>
+            <div style={{ minWidth: 0, paddingBottom: 2 }}>
               <p
+                className="line-clamp-2"
                 style={{
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: 500,
                   color: "white",
                   lineHeight: 1.25,
                   marginBottom: 4,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
                 }}
               >
                 {titleName}
               </p>
               {meta && (
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1 }}>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
                   {meta}
                 </p>
               )}
@@ -207,22 +202,69 @@ export default function RatingSelector({
         {/* ── Body ── */}
         <div
           style={{
-            flex: 1,
-            padding: "20px 20px 0",
-            paddingBottom: "max(28px, env(safe-area-inset-bottom))",
             background: "#FDFCFB",
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
+            padding: 20,
+            paddingBottom: "max(28px, env(safe-area-inset-bottom))",
           }}
         >
-          {/* Score display */}
-          <div style={{ minHeight: 72, position: "relative", display: "flex", alignItems: "center", marginBottom: 24 }}>
+          {/* Intro card */}
+          <div
+            style={{
+              background: "#F1EFE8",
+              border: "0.5px solid #D3D1C7",
+              borderRadius: 12,
+              padding: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              marginBottom: 20,
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "#fff0f0",
+                border: "0.5px solid #ffb3b3",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <path
+                  d="M11 2L13.472 7.6L19.5 8.382L15.25 12.52L16.344 18.5L11 15.6L5.656 18.5L6.75 12.52L2.5 8.382L8.528 7.6L11 2Z"
+                  fill="#ff5757"
+                />
+              </svg>
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: "#111111", marginBottom: 3 }}>
+                How was it?
+              </p>
+              <p style={{ fontSize: 12, color: "#888780", lineHeight: 1.4 }}>
+                Your rating is shared with friends — they&apos;ll see it when they look this up.
+              </p>
+            </div>
+          </div>
+
+          {/* Number display area */}
+          <div
+            style={{
+              minHeight: 60,
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+          >
             {/* Hint — fades out on selection */}
             <span
               style={{
                 position: "absolute",
-                fontSize: 15,
+                fontSize: 14,
                 color: "#B4B2A9",
                 opacity: selected == null ? 1 : 0,
                 transition: "opacity 200ms ease",
@@ -237,15 +279,15 @@ export default function RatingSelector({
               style={{
                 display: "flex",
                 alignItems: "baseline",
-                gap: 14,
+                gap: 12,
                 opacity: selected != null ? 1 : 0,
                 transition: "opacity 200ms ease",
               }}
             >
-              <span style={{ fontSize: 80, fontWeight: 500, color: "#ff5757", lineHeight: 1 }}>
+              <span style={{ fontSize: 72, fontWeight: 500, color: "#ff5757", lineHeight: 1 }}>
                 {selected ?? ""}
               </span>
-              <span style={{ fontSize: 20, color: "#888780" }}>
+              <span style={{ fontSize: 18, color: "#888780" }}>
                 {selected != null ? DESCRIPTORS[selected] : ""}
               </span>
             </div>
