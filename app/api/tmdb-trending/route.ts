@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const res = await fetch(
       `https://api.themoviedb.org/3/trending/${mediaType}/${timeWindow}?api_key=${API_KEY}&language=en-US`,
-      { cache: "no-store" }
+      { next: { revalidate: 3600 } }
     );
     if (!res.ok) return NextResponse.json({ results: [] }, { status: 200 });
     const data = await res.json();
