@@ -142,7 +142,7 @@ export default function TitleDetailPage() {
 
         {/* Content */}
         <div className="px-4 -mt-8 relative">
-          <div className="flex gap-4 mb-4">
+          <div className="flex gap-4 mb-2">
             {/* Poster */}
             <div
               className="relative w-[90px] h-[135px] overflow-hidden flex-shrink-0"
@@ -186,7 +186,7 @@ export default function TitleDetailPage() {
           </div>
 
           {/* Streaming providers */}
-          <div className="mb-2 h-10 flex items-center">
+          <div className="mb-2 flex items-center">
             <StreamingProviders id={tmdbId} mediaType={mediaType} size="md" maxShow={6} />
           </div>
 
