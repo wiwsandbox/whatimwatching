@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
@@ -43,7 +43,7 @@ const NEXT_STATUS: Record<WatchlistStatus, WatchlistStatus> = {
 
 const TAB_INDEX: Record<Filter, number> = { to_watch: 0, watching: 1, watched: 2 };
 
-export default function WatchlistPage() {
+function WatchlistPageInner() {
   const { watchlist, removeFromWatchlist, setWatchlistStatus } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [loading, setLoading] = useState(true);
@@ -220,6 +220,14 @@ export default function WatchlistPage() {
 
       <BottomNav />
     </div>
+  );
+}
+
+export default function WatchlistPage() {
+  return (
+    <Suspense>
+      <WatchlistPageInner />
+    </Suspense>
   );
 }
 
