@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
@@ -46,7 +47,9 @@ export default function WatchlistPage() {
   const { watchlist, removeFromWatchlist, setWatchlistStatus } = useApp();
   const [titleCache, setTitleCache] = useState<Record<string, TMDBTitle>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("to_watch");
+  const searchParams = useSearchParams();
+  const initialFilter = (["to_watch", "watching", "watched"].includes(searchParams.get("tab") ?? "") ? searchParams.get("tab") : "to_watch") as Filter;
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [filterVisible, setFilterVisible] = useState(true);
 
   const fetchTitles = useCallback(async () => {

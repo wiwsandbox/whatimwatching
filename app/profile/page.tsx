@@ -272,14 +272,15 @@ export default function ProfilePage() {
           {/* Stats row */}
           <div className="flex" style={{ borderTop: "0.5px solid var(--border)" }}>
             {[
-              { label: "Watched", value: watchedCount },
+              { label: "Watched", value: watchedCount, onClick: () => router.push("/watchlist?tab=watched") },
               { label: "Sent", value: sentCount },
-              { label: "Friends", value: friendsCount },
+              { label: "Friends", value: friendsCount, onClick: () => setManageFriendsOpen(true) },
             ].map((stat, i) => (
               <div
                 key={stat.label}
                 className="flex-1 flex flex-col items-center py-3"
                 style={i < 2 ? { borderRight: "0.5px solid var(--border)" } : {}}
+                onClick={stat.onClick}
               >
                 <span className="text-xl font-bold leading-none" style={{ color: "var(--text-primary)" }}>
                   {stat.value}
