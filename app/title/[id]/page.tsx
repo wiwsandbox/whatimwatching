@@ -318,6 +318,10 @@ export default function TitleDetailPage() {
         currentRating={watchlistItem?.rating ?? null}
         titleName={displayTitle}
         onRate={(rating) => setRating(tmdbId, mediaType, rating)}
+        backdropUrl={backdropUrl}
+        posterUrl={title.poster_path ? tmdbImage(title.poster_path, "w185") : null}
+        year={year}
+        mediaType={mediaType}
       />
 
       {survivorActive && (
