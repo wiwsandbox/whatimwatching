@@ -45,7 +45,7 @@ const KEYFRAMES = `
   }
   @keyframes ratingShackleClose {
     0%   { transform: translateY(0); }
-    100% { transform: translateY(7px); }
+    100% { transform: translateY(10px); }
   }
   @keyframes ratingLockThud {
     0%   { transform: scale(1); }
@@ -113,8 +113,8 @@ export default function RatingSelector({
     timers.current = [
       setTimeout(() => setPhase("fading"), 900),
       setTimeout(() => setPhase("lock"), 1150),
-      setTimeout(() => setPhase("dismissing"), 3000),
-      setTimeout(() => onClose(), 3300),
+      setTimeout(() => setPhase("dismissing"), 3400),
+      setTimeout(() => onClose(), 3700),
     ];
   };
 
@@ -386,19 +386,20 @@ export default function RatingSelector({
                       animationDelay: "200ms",
                     }}
                   />
-                  {/* Shackle — closes after pop lands */}
+                  {/* Shackle — legs + arc, slides down into body after pop lands */}
                   <g
                     style={{
-                      animation: "ratingShackleClose 300ms ease forwards",
+                      animation: "ratingShackleClose 320ms cubic-bezier(0.36,0.07,0.19,0.97) forwards",
                       animationDelay: "550ms",
                     }}
                   >
                     <path
-                      d="M 10,22 A 12,12 0 0 0 34,22"
+                      d="M 14,26 L 14,12 A 8,8 0 0 0 30,12 L 30,26"
                       stroke="#ff5757"
                       strokeWidth="2.5"
                       fill="none"
                       strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                   </g>
                   {/* Body + keyhole — thuds after pop lands */}
