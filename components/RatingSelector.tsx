@@ -113,8 +113,8 @@ export default function RatingSelector({
     timers.current = [
       setTimeout(() => setPhase("fading"), 900),
       setTimeout(() => setPhase("lock"), 1150),
-      setTimeout(() => setPhase("dismissing"), 1800),
-      setTimeout(() => onClose(), 2100),
+      setTimeout(() => setPhase("dismissing"), 2400),
+      setTimeout(() => onClose(), 2700),
     ];
   };
 
