@@ -113,8 +113,8 @@ export default function RatingSelector({
     timers.current = [
       setTimeout(() => setPhase("fading"), 900),
       setTimeout(() => setPhase("lock"), 1150),
-      setTimeout(() => setPhase("dismissing"), 2400),
-      setTimeout(() => onClose(), 2700),
+      setTimeout(() => setPhase("dismissing"), 3000),
+      setTimeout(() => onClose(), 3300),
     ];
   };
 
@@ -371,7 +371,7 @@ export default function RatingSelector({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 6,
-                  animation: "ratingLockPop 400ms cubic-bezier(0.36,0.07,0.19,0.97) both",
+                  animation: "ratingLockPop 500ms cubic-bezier(0.36,0.07,0.19,0.97) both",
                 }}
               >
                 <svg width="44" height="48" viewBox="0 0 44 48" fill="none">
@@ -386,11 +386,11 @@ export default function RatingSelector({
                       animationDelay: "200ms",
                     }}
                   />
-                  {/* Shackle — closes after 200ms */}
+                  {/* Shackle — closes after pop lands */}
                   <g
                     style={{
                       animation: "ratingShackleClose 300ms ease forwards",
-                      animationDelay: "200ms",
+                      animationDelay: "550ms",
                     }}
                   >
                     <path
@@ -401,13 +401,13 @@ export default function RatingSelector({
                       strokeLinecap="round"
                     />
                   </g>
-                  {/* Body + keyhole — thuds after 200ms */}
+                  {/* Body + keyhole — thuds after pop lands */}
                   <g
                     style={{
                       transformBox: "fill-box",
                       transformOrigin: "center bottom",
                       animation: "ratingLockThud 350ms ease forwards",
-                      animationDelay: "200ms",
+                      animationDelay: "550ms",
                     }}
                   >
                     <rect
