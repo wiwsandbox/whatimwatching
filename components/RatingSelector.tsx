@@ -309,7 +309,7 @@ export default function RatingSelector({
           </div>
 
           {/* ── Number display area ── */}
-          <div style={{ height: 90, position: "relative", marginBottom: 16 }}>
+          <div style={{ height: 110, position: "relative", marginBottom: 16 }}>
 
             {/* Hint */}
             <div
@@ -374,7 +374,7 @@ export default function RatingSelector({
                   animation: "ratingLockPop 500ms cubic-bezier(0.36,0.07,0.19,0.97) both",
                 }}
               >
-                <svg width="44" height="48" viewBox="0 0 44 48" fill="none">
+                <svg width="44" height="58" viewBox="0 -10 44 58" fill="none">
                   {/* Background glow — fades after 200ms */}
                   <circle
                     cx="22"
