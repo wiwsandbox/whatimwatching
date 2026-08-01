@@ -41,7 +41,15 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  let dryRun = false;
+  try {
+    const body = await req.json();
+    dryRun = body?.dry_run === true;
+  } catch {
+    // No body (or non-JSON) — e.g. the cron job's fixed '{}' payload. Default false.
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, supabaseKey);
@@ -103,6 +111,7 @@ Deno.serve(async () => {
   let sent = 0;
   let skippedAlreadySent = 0;
   let errors = 0;
+  const dryRunResults: Json[] = [];
 
   for (const batch of chunk(subs, CONCURRENCY)) {
     await Promise.all(
@@ -304,6 +313,21 @@ Deno.serve(async () => {
             trending: personalizedTrending,
           };
 
+          if (dryRun) {
+            // Exercise every query/aggregation above without sending a real
+            // push or writing a digest_sent event — lets us verify output
+            // shape against real data without touching real users.
+            dryRunResults.push({
+              user_id: userId,
+              digest,
+              own_activity_present: ownActivityPresent,
+              friend_activity_present: friendActivityPresent,
+              trending_only: trendingOnly,
+            });
+            sent++;
+            return;
+          }
+
           // --- push (placeholder copy pending design review) -----------------------
           try {
             await webpush.sendNotification(
@@ -353,11 +377,13 @@ Deno.serve(async () => {
   return new Response(
     JSON.stringify({
       ok: true,
+      dry_run: dryRun,
       processed: subs.length,
       sent,
       skipped_already_sent: skippedAlreadySent,
       errors,
       trending_source_empty: trendingRaw.length === 0,
+      ...(dryRun ? { results: dryRunResults } : {}),
     }),
     { status: 200, headers: { "Content-Type": "application/json" } }
   );

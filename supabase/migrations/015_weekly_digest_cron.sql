@@ -11,8 +11,9 @@
 --   the service role key in this file (this file is committed to git).
 --   In the Supabase dashboard: Project Settings > Vault > add a new secret
 --   named `weekly_digest_service_key` with the project's service role key
---   as its value. Also replace <PROJECT_REF> below with this project's ref
---   (visible in the dashboard URL / Project Settings > General).
+--   as its value. The cron job schedules fine without it, but every run
+--   will fail at the http_post step (null Authorization header) until the
+--   secret exists. Project ref (pqjhlmyxqmsgligewsav) is already filled in.
 create extension if not exists pg_cron with schema extensions;
 create extension if not exists pg_net with schema extensions;
 
@@ -22,7 +23,7 @@ select
     '0 15 * * 0', -- Sundays at 15:00 UTC
     $$
     select net.http_post(
-      url := 'https://<PROJECT_REF>.supabase.co/functions/v1/weekly-digest',
+      url := 'https://pqjhlmyxqmsgligewsav.supabase.co/functions/v1/weekly-digest',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'Authorization', 'Bearer ' || (

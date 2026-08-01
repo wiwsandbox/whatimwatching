@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/auth", "/auth/callback", "/auth/create-profile"];
+const PUBLIC_PATHS = ["/auth", "/auth/callback", "/auth/create-profile", "/api/tmdb-trending"];
 const PUBLIC_EXACT = ["/"]; // landing page — must be reachable without auth
 
 export async function middleware(request: NextRequest) {
