@@ -38,13 +38,21 @@ export async function sendPushToUser(
     serviceRoleKey
   );
 
+  let notificationId: string | null = null;
   if (options?.notificationType) {
-    await supabase.from("notifications").insert({
-      user_id: userId,
-      type: options.notificationType,
-      actor_id: options.senderId ?? null,
-      payload: { body, url, ...options.metadata },
-    }).then(() => {}, () => {});
+    const { data } = await supabase
+      .from("notifications")
+      .insert({
+        recipient_id: userId,
+        sender_id: options.senderId ?? null,
+        notification_type: options.notificationType,
+        title,
+        body,
+        metadata: { url, ...options.metadata },
+      })
+      .select("id")
+      .single();
+    notificationId = data?.id ?? null;
   }
 
   const { data: sub } = await supabase
@@ -61,6 +69,12 @@ export async function sendPushToUser(
       { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
       JSON.stringify({ title, body, url })
     );
+    if (notificationId) {
+      await supabase
+        .from("notifications")
+        .update({ delivered_at: new Date().toISOString() })
+        .eq("id", notificationId);
+    }
   } catch (err) {
     console.error("Push notification failed for user", userId, err);
   }

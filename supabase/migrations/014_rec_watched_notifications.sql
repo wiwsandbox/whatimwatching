@@ -7,13 +7,3 @@ CREATE TABLE IF NOT EXISTS public.recommendation_watch_notifications (
 );
 
 ALTER TABLE public.recommendation_watch_notifications ENABLE ROW LEVEL SECURITY;
-
--- Widen notifications.type: 'rec_watched' and 'rec_watchlisted' are already
--- inserted by lib/sendPush.ts (see app/api/push/rec-accepted) but silently
--- fail today because the original CHECK only allowed friend_request/recommendation.
-ALTER TABLE public.notifications
-  DROP CONSTRAINT IF EXISTS notifications_type_check;
-
-ALTER TABLE public.notifications
-  ADD CONSTRAINT notifications_type_check
-  CHECK (type IN ('friend_request', 'recommendation', 'rec_watched', 'rec_watchlisted'));

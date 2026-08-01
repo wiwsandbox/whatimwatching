@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
             recipient_id: user.id,
             tmdb_id,
             media_type,
-            title: rec.title,
+            content_title: rec.title,
             recommended_at: rec.created_at,
             watched_at: watchedAt,
             recipient_rating: recipientRating,
