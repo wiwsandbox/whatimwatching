@@ -561,6 +561,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [supabase]
   );
 
+  const notifyRecWatched = useCallback(
+    (tmdbId: number, mediaType: MediaType) => {
+      fetch("/api/push/rec-watched", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tmdb_id: tmdbId, media_type: mediaType }),
+      }).catch(() => {});
+    },
+    []
+  );
+
   const markWatchedFromRec = useCallback(
     async (recId: string, tmdbId: number, mediaType: MediaType, title: string, posterPath: string | null) => {
       if (!userId) return;
@@ -595,13 +606,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       showToast("Marked as watched");
       logEvent("rec_actioned", { rec_id: recId, action: "watched", tmdb_id: tmdbId, media_type: mediaType });
-      fetch("/api/push/rec-accepted", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rec_id: recId, notification_type: "watched" }),
-      }).catch(() => {});
+      notifyRecWatched(tmdbId, mediaType);
     },
-    [userId, supabase, showToast, logEvent]
+    [userId, supabase, showToast, logEvent, notifyRecWatched]
   );
 
   const dismissRecommendation = useCallback(
@@ -711,9 +718,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         showToast("Added to watchlist");
         logEvent("watchlist_add", { tmdb_id: item.tmdbId, media_type: item.mediaType, source: item.source ?? null });
+        if (newItem.status === "watched") notifyRecWatched(newItem.tmdbId, newItem.mediaType);
       }
     },
-    [userId, supabase, showToast, logEvent]
+    [userId, supabase, showToast, logEvent, notifyRecWatched]
   );
 
   const removeFromWatchlist = useCallback(
@@ -768,8 +776,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         )
       );
       logEvent("watchlist_status_change", { watchlist_id: id, status });
+      if (status === "watched") {
+        const item = watchlist.find((w) => w.id === id);
+        if (item) notifyRecWatched(item.tmdbId, item.mediaType);
+      }
     },
-    [supabase, showToast, logEvent]
+    [supabase, showToast, logEvent, watchlist, notifyRecWatched]
   );
 
   const setRating = useCallback(
@@ -835,10 +847,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ]);
           showToast(rating ? `Rated ${rating}/10` : "Rating removed");
           logEvent("rating_set", { tmdb_id: tmdbId, media_type: mediaType, rating });
+          notifyRecWatched(tmdbId, mediaType);
         }
       }
     },
-    [userId, supabase, watchlist, logEvent]
+    [userId, supabase, watchlist, logEvent, notifyRecWatched]
   );
 
   const markWatchlistWatched = useCallback(
