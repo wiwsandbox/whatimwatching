@@ -37,6 +37,16 @@ function pluralize(n: number, word: string) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
+// "person"/"Must Watch" don't pluralize with a plain +s — irregular cases
+// get their own helpers rather than a generic pluralizer that gets it wrong.
+function pluralizePeople(n: number) {
+  return n === 1 ? "1 person" : `${n} people`;
+}
+
+function pluralizeMustWatch(n: number) {
+  return n === 1 ? "1 Must Watch" : `${n} Must Watches`;
+}
+
 async function logDigestEvent(supabase: ReturnType<typeof getClient>, userId: string, eventType: string, metadata: Record<string, unknown>) {
   await supabase.from("events").insert({ user_id: userId, event_type: eventType, metadata }).then(() => {}, () => {});
 }
@@ -138,7 +148,7 @@ function PayoffBlock({
         kicker="Your week"
         headline={
           <>
-            {pluralize(payoff.count, "person")} watched <em style={{ fontStyle: "italic", color: "var(--brand)" }}>because of you.</em>
+            {pluralizePeople(payoff.count)} watched <em style={{ fontStyle: "italic", color: "var(--brand)" }}>because of you.</em>
           </>
         }
         sub={
@@ -148,7 +158,7 @@ function PayoffBlock({
             className="inline-flex items-center gap-1.5 text-[11.5px] px-3 py-1.5 rounded-full"
             style={{ textDecoration: "none", color: "var(--text-secondary)", background: "var(--surface-1)" }}
           >
-            Last week it was {pluralize(payoff.prior_week_count, "person")}
+            Last week it was {pluralizePeople(payoff.prior_week_count)}
             {delta !== 0 && (
               <Mono style={{ color: delta > 0 ? "#1a7f4b" : "var(--brand)" }}>
                 {delta > 0 ? "↑" : "↓"} {Math.abs(delta)}
@@ -547,7 +557,7 @@ function MustWatchBalanceBlock({ item }: { item: MustWatchBalanceItem }) {
         </p>
         <p className="text-sm mt-1.5" style={{ color: "white" }}>
           <b style={{ background: GOLD, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", fontWeight: 700 }}>
-            {pluralize(item.remaining, "left")}
+            {item.remaining} left
           </b>{" "}
           this cycle
         </p>
@@ -800,14 +810,14 @@ function ThinState({
   const everythingElse: { icon: string; text: string; sub: string; href: string }[] = [];
   if (m.payoff) {
     const p = m.payoff as { count: number };
-    everythingElse.push({ icon: "🎯", text: `${pluralize(p.count, "person")} watched because of you.`, sub: "See who.", href: "/profile" });
+    everythingElse.push({ icon: "🎯", text: `${pluralizePeople(p.count)} watched because of you.`, sub: "See who.", href: "/profile" });
   }
   if (waitingItems.length > picks.length) {
     everythingElse.push({ icon: "📥", text: `${waitingItems.length - pickedRecIds.size} more waiting on you.`, sub: "Still unopened.", href: "/digest" });
   }
   if (m.must_watch_balance) {
     const b = m.must_watch_balance as unknown as MustWatchBalanceItem;
-    everythingElse.push({ icon: "⭐", text: `${pluralize(b.remaining, "Must Watch")} left.`, sub: "Unused ones don't carry over.", href: "/profile" });
+    everythingElse.push({ icon: "⭐", text: `${pluralizeMustWatch(b.remaining)} left.`, sub: "Unused ones don't carry over.", href: "/profile" });
   }
   if ((m.trending_annotated?.length ?? 0) > 0) {
     const t = (m.trending_annotated as unknown as (DigestTrendingItem & { signal: string })[])[0];

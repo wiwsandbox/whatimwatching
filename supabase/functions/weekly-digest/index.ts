@@ -523,7 +523,7 @@ Deno.serve(async (req) => {
               if (ratedFriend) {
                 signal = `${nameById.get(ratedFriend.user_id as string) ?? "A friend"} rated it ${ratedFriend.rating}/10`;
               } else if (friendsForTitle.length > 0) {
-                signal = `${friendsForTitle.length} friend${friendsForTitle.length === 1 ? "" : "s"} have it saved`;
+                signal = friendsForTitle.length === 1 ? "1 friend has it saved" : `${friendsForTitle.length} friends have it saved`;
               } else {
                 signal = "No one in your circle yet";
               }
