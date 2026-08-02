@@ -15,19 +15,33 @@ function formatRange(startIso: string, endIso: string) {
 }
 
 export default function DigestTile({ digest }: { digest: DigestEvent }) {
-  const { own_activity, friend_activity, trending, window_start, window_end } = digest.metadata;
-  const ownCount =
-    own_activity.rec_watched.length +
-    own_activity.rated.length +
-    own_activity.watchlist_add.length +
-    own_activity.watched.length;
-  const friendCount = friend_activity.length;
-  const trendingCount = trending.length;
+  const m = digest.metadata;
+  const { window_start, window_end } = m;
 
+  // v2 (post content-redesign) and v1 (historical) rows have different
+  // shapes — compute the teaser from whichever fields this row actually has.
   const parts: string[] = [];
-  if (ownCount > 0) parts.push(`${ownCount} update${ownCount === 1 ? "" : "s"}`);
-  if (friendCount > 0) parts.push(`${friendCount} from friends`);
-  if (trendingCount > 0) parts.push(`${trendingCount} trending`);
+  if (m.state) {
+    const ownCount =
+      (m.payoff?.count ?? 0) +
+      (m.unrated?.length ?? 0) +
+      (m.must_watch_received?.length ?? 0) +
+      (m.episodes_aired?.length ?? 0) +
+      (m.waiting_on_you?.length ?? 0);
+    const friendCount = (m.circle_ratings?.length ?? 0) + (m.taste_twin ? 1 : 0) + (m.hottest_take ? 1 : 0);
+    const trendingCount = m.trending_annotated?.length ?? 0;
+    if (ownCount > 0) parts.push(`${ownCount} update${ownCount === 1 ? "" : "s"}`);
+    if (friendCount > 0) parts.push(`${friendCount} from friends`);
+    if (trendingCount > 0) parts.push(`${trendingCount} trending`);
+  } else {
+    const own = m.own_activity;
+    const ownCount = own ? own.rec_watched.length + own.rated.length + own.watchlist_add.length + own.watched.length : 0;
+    const friendCount = m.friend_activity?.length ?? 0;
+    const trendingCount = m.trending?.length ?? 0;
+    if (ownCount > 0) parts.push(`${ownCount} update${ownCount === 1 ? "" : "s"}`);
+    if (friendCount > 0) parts.push(`${friendCount} from friends`);
+    if (trendingCount > 0) parts.push(`${trendingCount} trending`);
+  }
 
   return (
     <Link

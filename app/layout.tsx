@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, DM_Sans } from "next/font/google";
+import { Playfair_Display, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import { AuthProvider } from "@/lib/authContext";
@@ -10,7 +10,7 @@ import SplashScreen from "@/components/SplashScreen";
 import OnboardingTrigger from "@/components/OnboardingTrigger";
 
 const playfair = Playfair_Display({
-  weight: "900",
+  weight: ["700", "900"],
   subsets: ["latin"],
   variable: "--font-playfair",
   display: "swap",
@@ -19,6 +19,13 @@ const playfair = Playfair_Display({
 const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-dm-mono",
   display: "swap",
 });
 
@@ -48,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable} ${dmMono.variable}`}>
       <body className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text-primary)" }}>
         <SplashScreen />
         <div className="mx-auto w-full max-w-[390px] min-h-screen relative overflow-x-hidden" style={{ background: "var(--bg)" }}>
