@@ -6,6 +6,7 @@ import Avatar from "@/components/Avatar";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
 import RecommendationCard from "@/components/RecommendationCard";
+import DigestTile from "@/components/DigestTile";
 import SendMessageSheet from "@/components/SendMessageSheet";
 import AddFriendSheet from "@/components/AddFriendSheet";
 import { useApp } from "@/lib/store";
@@ -13,7 +14,7 @@ import { getMovie, getTVShow } from "@/lib/tmdb";
 import { getClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { formatRelativeTime } from "@/lib/mockData";
-import type { TMDBTitle } from "@/lib/types";
+import type { TMDBTitle, DigestEvent } from "@/lib/types";
 
 type Tab = "friends" | "recommendations";
 
@@ -25,8 +26,22 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [composeOpen, setComposeOpen] = useState(false);
   const [addFriendOpen, setAddFriendOpen] = useState(false);
+  const [digestEvents, setDigestEvents] = useState<DigestEvent[]>([]);
 
   const supabase = useRef(getClient()).current;
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("events")
+      .select("id, created_at, metadata")
+      .eq("user_id", userId)
+      .eq("event_type", "digest_sent")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setDigestEvents(data as unknown as DigestEvent[]);
+      });
+  }, [userId, supabase]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -89,6 +104,15 @@ export default function InboxPage() {
   }));
 
   const unwatchedCount = recommendations.filter((r) => !r.watched).length;
+
+  type FeedItem =
+    | { kind: "rec"; date: string; rec: (typeof enrichedRecs)[number] }
+    | { kind: "digest"; date: string; digest: DigestEvent };
+
+  const feedItems: FeedItem[] = [
+    ...enrichedRecs.map((rec) => ({ kind: "rec" as const, date: rec.createdAt, rec })),
+    ...digestEvents.map((digest) => ({ kind: "digest" as const, date: digest.created_at, digest })),
+  ].sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return (
     <div className="flex flex-col min-h-screen pb-24" style={{ background: "var(--bg)" }}>
@@ -332,7 +356,7 @@ export default function InboxPage() {
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="h-[140px] rounded-2xl animate-pulse" style={{ background: "var(--surface-2)" }} />
               ))
-            ) : enrichedRecs.length === 0 ? (
+            ) : feedItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--surface-2)" }}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -352,17 +376,21 @@ export default function InboxPage() {
                 </button>
               </div>
             ) : (
-              enrichedRecs.map((rec) => (
-                <RecommendationCard
-                  key={rec.id}
-                  rec={rec}
-                  onMarkWatched={markWatched}
-                  onMarkUnwatched={markUnwatched}
-                  onAddToWatchlist={addRecToWatchlist}
-                  onMarkWatchedFromRec={markWatchedFromRec}
-                  onDismiss={dismissRecommendation}
-                />
-              ))
+              feedItems.map((item) =>
+                item.kind === "digest" ? (
+                  <DigestTile key={`digest-${item.digest.id}`} digest={item.digest} />
+                ) : (
+                  <RecommendationCard
+                    key={item.rec.id}
+                    rec={item.rec}
+                    onMarkWatched={markWatched}
+                    onMarkUnwatched={markUnwatched}
+                    onAddToWatchlist={addRecToWatchlist}
+                    onMarkWatchedFromRec={markWatchedFromRec}
+                    onDismiss={dismissRecommendation}
+                  />
+                )
+              )
             )}
           </div>
         )}

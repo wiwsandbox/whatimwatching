@@ -89,6 +89,57 @@ export interface FriendRequest {
   createdAt: string;
 }
 
+export interface DigestActivityItem {
+  id?: string;
+  tmdb_id: number;
+  media_type: MediaType;
+  title: string;
+  poster_path: string | null;
+  rating?: number;
+  recipient_rating?: number | null;
+  created_at: string;
+  watched_at?: string;
+}
+
+export interface DigestFriendActivityItem {
+  kind: "friend_rating" | "friend_watchlist_add" | "recommendation_received";
+  friend_id: string;
+  friend_name: string;
+  tmdb_id: number;
+  media_type: MediaType;
+  title: string;
+  poster_path: string | null;
+  rating?: number;
+  created_at: string;
+}
+
+export interface DigestTrendingItem {
+  tmdb_id: number;
+  media_type: MediaType;
+  title: string;
+  poster_path: string | null;
+}
+
+export interface DigestEvent {
+  id: string;
+  created_at: string;
+  metadata: {
+    window_start: string;
+    window_end: string;
+    own_activity: {
+      rec_watched: DigestActivityItem[];
+      rated: DigestActivityItem[];
+      watchlist_add: DigestActivityItem[];
+      watched: DigestActivityItem[];
+    };
+    friend_activity: DigestFriendActivityItem[];
+    trending: DigestTrendingItem[];
+    own_activity_present: boolean;
+    friend_activity_present: boolean;
+    trending_only: boolean;
+  };
+}
+
 export interface User {
   id: string;
   name: string;

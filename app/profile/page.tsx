@@ -345,6 +345,33 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* ── Weekly digest ── */}
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-2 px-1" style={{ color: "var(--text-secondary)" }}>
+            Weekly digest
+          </p>
+          <Link
+            href="/digest"
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-opacity active:opacity-70"
+            style={{ background: "var(--surface)", border: "0.5px solid var(--border)", boxShadow: "0 2px 12px rgba(180,100,80,0.06)", textDecoration: "none" }}
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#EAF0FC" }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#3457B2" strokeWidth="1.3" />
+                <path d="M2 6H14" stroke="#3457B2" strokeWidth="1.3" />
+                <path d="M5 2V4M11 2V4" stroke="#3457B2" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>View your weekly digest</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>What you and your friends watched this week</p>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+              <path d="M5 3L9 7L5 11" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </div>
+
         {/* ── Streaming services ── */}
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] mb-2 px-1" style={{ color: "var(--text-secondary)" }}>

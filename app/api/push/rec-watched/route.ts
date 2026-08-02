@@ -28,6 +28,8 @@ export async function POST(request: NextRequest) {
     .eq("tmdb_id", tmdb_id)
     .eq("media_type", media_type)
 
+  if (!recs || recs.length === 0) return NextResponse.json({ ok: true })
+
   // Exclude self-recommendations before claiming — once claimed, the send
   // is decoupled from this request (handled later by the polling edge
   // function), so filtering has to happen here, not after the fact.
