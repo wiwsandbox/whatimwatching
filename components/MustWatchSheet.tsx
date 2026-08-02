@@ -7,6 +7,7 @@ interface MustWatchSheetProps {
   onClose: () => void;
   onConfirm: () => void;
   remaining: number;
+  unlimited?: boolean;
   titleName: string;
   sending: boolean;
 }
@@ -36,6 +37,7 @@ export default function MustWatchSheet({
   onClose,
   onConfirm,
   remaining,
+  unlimited = false,
   sending,
 }: MustWatchSheetProps) {
   const [visible, setVisible] = useState(false);
@@ -145,7 +147,7 @@ export default function MustWatchSheet({
                 fontFamily: "var(--font-dm-sans)",
               }}
             >
-              {remaining} of 3 remaining
+              {unlimited ? "Unlimited" : `${remaining} of 3 remaining`}
             </p>
             <p
               style={{
@@ -154,24 +156,26 @@ export default function MustWatchSheet({
                 fontFamily: "var(--font-dm-sans)",
               }}
             >
-              Resets {resetStr}
+              {unlimited ? "Owner account — no monthly cap" : `Resets ${resetStr}`}
             </p>
           </div>
 
           {/* Pip bars */}
-          <div style={{ display: "flex", gap: 6 }}>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: 28,
-                  height: 10,
-                  borderRadius: 5,
-                  background: i < remaining ? GOLD : "#dddddd",
-                }}
-              />
-            ))}
-          </div>
+          {!unlimited && (
+            <div style={{ display: "flex", gap: 6 }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 28,
+                    height: 10,
+                    borderRadius: 5,
+                    background: i < remaining ? GOLD : "#dddddd",
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Rules + actions */}
@@ -215,7 +219,7 @@ export default function MustWatchSheet({
             </div>
           ))}
 
-          {remaining === 0 ? (
+          {!unlimited && remaining === 0 ? (
             <div style={{ textAlign: "center", marginTop: 20 }}>
               <p style={{ fontSize: 12, color: "#aaa", marginBottom: 4 }}>
                 You&apos;ve used all your Must Watches this month.

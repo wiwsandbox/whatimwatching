@@ -32,7 +32,7 @@ export default function RecommendModal({
   tmdbId,
   mediaType,
 }: RecommendModalProps) {
-  const { sendRecommendation, mustWatchRemaining, sendMustWatchRecommendation } = useApp();
+  const { sendRecommendation, mustWatchRemaining, mustWatchUnlimited, sendMustWatchRecommendation } = useApp();
   const { user } = useAuth();
   const supabase = getClient();
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -282,19 +282,19 @@ export default function RecommendModal({
             disabled={selectedIds.size === 0}
             className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
             style={
-              mustWatchRemaining === 0 || selectedIds.size === 0
+              (!mustWatchUnlimited && mustWatchRemaining === 0) || selectedIds.size === 0
                 ? { background: "#f7f7f7", color: "#cccccc", border: "1px solid #eeeeee" }
                 : { background: "linear-gradient(135deg, #D4AF37, #F5D060)", color: "#1a1a1a" }
             }
           >
             <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>MUST WATCH</span>
-            {mustWatchRemaining > 0 && selectedIds.size > 0 && (
+            {selectedIds.size > 0 && (mustWatchUnlimited || mustWatchRemaining > 0) && (
               <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.7 }}>
-                · {mustWatchRemaining} left
+                · {mustWatchUnlimited ? "Unlimited" : `${mustWatchRemaining} left`}
               </span>
             )}
           </button>
-          {mustWatchRemaining === 0 && (
+          {!mustWatchUnlimited && mustWatchRemaining === 0 && (
             <p className="text-center text-[10px] mt-1.5" style={{ color: "#cccccc" }}>
               Resets {(() => {
                 const now = new Date();
@@ -351,6 +351,7 @@ export default function RecommendModal({
         onClose={() => setMustWatchSheetOpen(false)}
         onConfirm={handleMustWatchSend}
         remaining={mustWatchRemaining}
+        unlimited={mustWatchUnlimited}
         titleName={titleName}
         sending={mustWatchSending}
       />
