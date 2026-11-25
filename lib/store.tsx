@@ -107,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [mustWatchRemaining, setMustWatchRemaining] = useState(3);
   const [mustWatchUnlimited, setMustWatchUnlimited] = useState(false);
-  const [lastInboxSeenAt, setLastInboxSeenAt] = useState<string>(() => {
+  const [, setLastInboxSeenAt] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("wiw_inbox_seen") ?? new Date(0).toISOString();
     }
@@ -860,7 +860,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [userId, supabase, watchlist, logEvent, notifyRecWatched]
+    [userId, supabase, watchlist, logEvent, notifyRecWatched, showToast]
   );
 
   const markWatchlistWatched = useCallback(

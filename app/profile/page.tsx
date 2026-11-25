@@ -113,7 +113,8 @@ export default function ProfilePage() {
       const isActive = activeServices.has(service);
       setActiveServices((prev) => {
         const next = new Set(prev);
-        isActive ? next.delete(service) : next.add(service);
+        if (isActive) next.delete(service);
+        else next.add(service);
         return next;
       });
       if (isActive) {
@@ -131,7 +132,8 @@ export default function ProfilePage() {
       const isActive = activeGenres.has(genre);
       setActiveGenres((prev) => {
         const next = new Set(prev);
-        isActive ? next.delete(genre) : next.add(genre);
+        if (isActive) next.delete(genre);
+        else next.add(genre);
         return next;
       });
       if (isActive) {

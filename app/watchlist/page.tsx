@@ -252,7 +252,7 @@ function WatchlistPageInner() {
                   </svg>
                 </div>
                 <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Nothing in progress</p>
-                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Titles you're currently watching appear here</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Titles you&apos;re currently watching appear here</p>
               </>
             )}
             {filter === "watched" && (
@@ -264,7 +264,7 @@ function WatchlistPageInner() {
                   </svg>
                 </div>
                 <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>No finished titles yet</p>
-                <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>Mark titles as watched to track what you've seen</p>
+                <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>Mark titles as watched to track what you&apos;ve seen</p>
                 <Link href="/search" className="px-5 py-2.5 text-sm font-semibold" style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}>
                   Find something to watch
                 </Link>

@@ -10,7 +10,6 @@ const TOTAL_SLIDES = 4;
 export default function OnboardingOverlay({
   isOpen,
   onClose,
-  forceShow,
 }: {
   isOpen: boolean;
   onClose: () => void;

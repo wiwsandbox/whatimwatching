@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import BottomNav from "@/components/BottomNav";
 import AppHeader from "@/components/AppHeader";
