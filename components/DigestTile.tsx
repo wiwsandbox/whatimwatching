@@ -15,37 +15,14 @@ function formatRange(startIso: string, endIso: string) {
 }
 
 export default function DigestTile({ digest }: { digest: DigestEvent }) {
-  const m = digest.metadata;
-  const { window_start, window_end } = m;
-
-  // v2 (post content-redesign) and v1 (historical) rows have different
-  // shapes — compute the teaser from whichever fields this row actually has.
+  const { window_start, window_end, own_count, friend_count } = digest.metadata;
   const parts: string[] = [];
-  if (m.state) {
-    const ownCount =
-      (m.payoff?.count ?? 0) +
-      (m.unrated?.length ?? 0) +
-      (m.must_watch_received?.length ?? 0) +
-      (m.episodes_aired?.length ?? 0) +
-      (m.waiting_on_you?.length ?? 0);
-    const friendCount = (m.circle_ratings?.length ?? 0) + (m.taste_twin ? 1 : 0) + (m.hottest_take ? 1 : 0);
-    const trendingCount = m.trending_annotated?.length ?? 0;
-    if (ownCount > 0) parts.push(`${ownCount} update${ownCount === 1 ? "" : "s"}`);
-    if (friendCount > 0) parts.push(`${friendCount} from friends`);
-    if (trendingCount > 0) parts.push(`${trendingCount} trending`);
-  } else {
-    const own = m.own_activity;
-    const ownCount = own ? own.rec_watched.length + own.rated.length + own.watchlist_add.length + own.watched.length : 0;
-    const friendCount = m.friend_activity?.length ?? 0;
-    const trendingCount = m.trending?.length ?? 0;
-    if (ownCount > 0) parts.push(`${ownCount} update${ownCount === 1 ? "" : "s"}`);
-    if (friendCount > 0) parts.push(`${friendCount} from friends`);
-    if (trendingCount > 0) parts.push(`${trendingCount} trending`);
-  }
+  if (own_count != null) parts.push(`${own_count} on your list`);
+  if (friend_count != null) parts.push(`${friend_count} on friends'`);
 
   return (
     <Link
-      href={`/digest?event=${digest.id}`}
+      href="/digest"
       className="flex items-center gap-3 p-4 rounded-2xl transition-all active:scale-[0.97]"
       style={{
         background: BLUE_BG,
@@ -66,7 +43,7 @@ export default function DigestTile({ digest }: { digest: DigestEvent }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold" style={{ color: BLUE_ACCENT }}>
-          Your weekly digest
+          Your watchlist &amp; friends&apos;
         </p>
         <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
           {formatRange(window_start, window_end)}
