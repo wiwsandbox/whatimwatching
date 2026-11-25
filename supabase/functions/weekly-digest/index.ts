@@ -15,6 +15,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3";
 
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+// Guard is shorter than the window on purpose: last week's send is logged a
+// few seconds after 15:00, so an exact 7-day guard skipped every other week.
+const GUARD_MS = 6 * 24 * 60 * 60 * 1000;
 const CONCURRENCY = 8;
 const PUSH_TITLE = "Your watchlist is waiting 🎬";
 
@@ -39,7 +42,43 @@ function buildBody(own: number, friends: number, unrated: number): string {
     : `${unrated} titles you've watched are waiting for your rating.`;
 }
 
+// Only the project's secret keys may call this (the cron job sends one). The
+// public anon/publishable keys and signed-in users' tokens are rejected.
+function secretKeys(): string[] {
+  const out: string[] = [];
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacy) out.push(legacy);
+  const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      const vals = Array.isArray(parsed) ? parsed : typeof parsed === "object" && parsed ? Object.values(parsed) : [parsed];
+      for (const v of vals) if (typeof v === "string" && v) out.push(v);
+    } catch {
+      out.push(raw);
+    }
+  }
+  return out;
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function isAuthorized(req: Request): boolean {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  return secretKeys().some((k) => timingSafeEqual(token, k));
+}
+
 Deno.serve(async (req) => {
+  if (!isAuthorized(req)) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+
   let dryRun = false;
   try {
     const body = await req.json();
@@ -54,6 +93,7 @@ Deno.serve(async (req) => {
   const now = new Date();
   const windowStart = new Date(now.getTime() - WINDOW_MS).toISOString();
   const windowEnd = now.toISOString();
+  const guardStart = new Date(now.getTime() - GUARD_MS).toISOString();
 
   const { data: subs, error: subsErr } = await admin.from("push_subscriptions").select("user_id, endpoint, p256dh, auth");
   if (subsErr) return new Response(JSON.stringify({ error: subsErr.message }), { status: 500 });
@@ -76,7 +116,7 @@ Deno.serve(async (req) => {
               .select("id")
               .eq("user_id", userId)
               .eq("event_type", "digest_sent")
-              .gte("created_at", windowStart)
+              .gte("created_at", guardStart)
               .limit(1)
               .maybeSingle();
             if (alreadySent) {
