@@ -12,6 +12,13 @@ import { useApp } from "@/lib/store";
 import type { TMDBTitle, WatchlistItem, WatchlistStatus } from "@/lib/types";
 
 type Filter = "to_watch" | "watching" | "watched";
+type TypeFilter = "all" | "movie" | "tv";
+
+const TYPE_OPTIONS: { key: TypeFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "movie", label: "Movies" },
+  { key: "tv", label: "TV" },
+];
 
 const STATUS_LABELS: Record<WatchlistStatus, string> = {
   to_watch: "To Watch",
@@ -50,6 +57,7 @@ function WatchlistPageInner() {
   const searchParams = useSearchParams();
   const initialFilter = (["to_watch", "watching", "watched"].includes(searchParams.get("tab") ?? "") ? searchParams.get("tab") : "to_watch") as Filter;
   const [filter, setFilter] = useState<Filter>(initialFilter);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [filterVisible, setFilterVisible] = useState(true);
 
   const fetchTitles = useCallback(async () => {
@@ -80,16 +88,28 @@ function WatchlistPageInner() {
     }, 100);
   }, [filter]);
 
+  const handleTypeChange = useCallback((t: TypeFilter) => {
+    if (t === typeFilter) return;
+    setFilterVisible(false);
+    setTimeout(() => {
+      setTypeFilter(t);
+      setFilterVisible(true);
+    }, 100);
+  }, [typeFilter]);
+
+  const matchesType = (w: WatchlistItem) => typeFilter === "all" || w.mediaType === typeFilter;
+
   const enriched = watchlist.map((w) => ({
     ...w,
     title: titleCache[`${w.mediaType}-${w.tmdbId}`],
   }));
 
-  const filtered = enriched.filter((w) => w.status === filter);
+  const filtered = enriched.filter((w) => w.status === filter && matchesType(w));
 
-  const toWatchCount = watchlist.filter((w) => w.status === "to_watch").length;
-  const watchingCount = watchlist.filter((w) => w.status === "watching").length;
-  const watchedCount = watchlist.filter((w) => w.status === "watched").length;
+  const typedWatchlist = watchlist.filter(matchesType);
+  const toWatchCount = typedWatchlist.filter((w) => w.status === "to_watch").length;
+  const watchingCount = typedWatchlist.filter((w) => w.status === "watching").length;
+  const watchedCount = typedWatchlist.filter((w) => w.status === "watched").length;
 
   const filterTabs: { key: Filter; label: string; count?: number }[] = [
     { key: "to_watch", label: "To Watch", count: toWatchCount },
@@ -144,6 +164,36 @@ function WatchlistPageInner() {
             })}
           </div>
         </div>
+        <div className="flex justify-center px-4 pb-3">
+          <div
+            role="group"
+            aria-label="Show movies or TV"
+            className="flex rounded-full"
+            style={{ width: 248, height: 40, padding: 3, background: "var(--surface-2)", border: "0.5px solid var(--border)" }}
+          >
+            {TYPE_OPTIONS.map(({ key, label }) => {
+              const selected = typeFilter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => handleTypeChange(key)}
+                  className="flex-1 rounded-full text-[12px]"
+                  style={{
+                    background: selected ? "white" : "transparent",
+                    color: selected ? "#d63b3b" : "var(--text-secondary)",
+                    fontWeight: selected ? 600 : 500,
+                    boxShadow: selected ? "0 1px 4px rgba(180,100,80,0.18)" : "none",
+                    transition: "background 150ms ease, color 150ms ease",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </header>
 
       <main
@@ -155,6 +205,23 @@ function WatchlistPageInner() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "var(--surface-2)" }} />
             ))}
+          </div>
+        ) : filtered.length === 0 && typeFilter !== "all" ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              {typeFilter === "movie" ? "No movies" : "No TV shows"} in {STATUS_LABELS[filter]}
+            </p>
+            <p className="text-xs mt-1 mb-5" style={{ color: "var(--text-muted)" }}>
+              Switch to All to see everything in {STATUS_LABELS[filter]}
+            </p>
+            <button
+              type="button"
+              onClick={() => handleTypeChange("all")}
+              className="px-5 py-2.5 text-sm font-semibold"
+              style={{ background: "var(--brand)", color: "white", borderRadius: 14 }}
+            >
+              Show all
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
