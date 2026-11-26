@@ -33,14 +33,49 @@ export default function InboxPage() {
     if (!userId) return;
     supabase
       .from("events")
-      .select("id, created_at, metadata")
+      .select("id, created_at, event_type, metadata")
       .eq("user_id", userId)
-      .eq("event_type", "digest_sent")
+      .in("event_type", ["digest_sent", "digest_dismissed"])
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        if (data) setDigestEvents(data as unknown as DigestEvent[]);
+        if (!data) return;
+        const rows = data as unknown as Array<DigestEvent & { event_type: string }>;
+        const dismissed = new Set(
+          rows
+            .filter((r) => r.event_type === "digest_dismissed")
+            .map((r) => (r.metadata as unknown as { digest_id?: string } | null)?.digest_id)
+            .filter((id): id is string => typeof id === "string")
+        );
+        setDigestEvents(
+          rows
+            .filter((r) => r.event_type === "digest_sent" && !dismissed.has(String(r.id)))
+            .map(({ id, created_at, metadata }) => ({ id, created_at, metadata }))
+        );
       });
   }, [userId, supabase]);
+
+  const handleDismissDigest = useCallback(
+    async (digestId: string) => {
+      if (!userId) return;
+      const removed = digestEvents.find((d) => String(d.id) === String(digestId));
+      if (!removed) return;
+      setDigestEvents((prev) => prev.filter((d) => String(d.id) !== String(digestId)));
+      const { error } = await supabase.from("events").insert({
+        user_id: userId,
+        event_type: "digest_dismissed",
+        metadata: { digest_id: String(digestId) },
+      });
+      if (error) {
+        console.error("Failed to dismiss digest", error);
+        setDigestEvents((prev) =>
+          prev.some((d) => String(d.id) === String(removed.id))
+            ? prev
+            : [...prev, removed].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+        );
+      }
+    },
+    [userId, supabase, digestEvents]
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -377,7 +412,7 @@ export default function InboxPage() {
             ) : (
               feedItems.map((item) =>
                 item.kind === "digest" ? (
-                  <DigestTile key={`digest-${item.digest.id}`} digest={item.digest} />
+                  <DigestTile key={`digest-${item.digest.id}`} digest={item.digest} onDismiss={handleDismissDigest} />
                 ) : (
                   <RecommendationCard
                     key={item.rec.id}
